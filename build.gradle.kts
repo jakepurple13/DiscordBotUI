@@ -46,6 +46,7 @@ dependencies {
     val precompose = "1.5.0-beta01"
     implementation("moe.tlaster:precompose:$precompose")
     implementation("moe.tlaster:precompose-viewmodel:$precompose")
+    implementation("media.kamel:kamel-image:0.7.2")
 
     //DiscordBot stuff
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")

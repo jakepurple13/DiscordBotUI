@@ -2,27 +2,29 @@
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.viewmodel.viewModel
 
 @Composable
 @Preview
-fun App() {
-    val vm = viewModel { DiscordBotViewModel() }
+fun App(vm: DiscordBotViewModel) {
     val scope = rememberCoroutineScope()
 
     Crossfade(vm.bot) { target ->
-        if(target != null) {
+        if (target != null) {
             DiscordBotView(vm)
         } else {
             Box(
@@ -52,9 +54,18 @@ fun App() {
 }
 
 fun main() = application {
+    val viewModel = remember { DiscordBotViewModel() }
     WindowWithBar(
         onCloseRequest = ::exitApplication
     ) {
-        App()
+        App(viewModel)
     }
+
+    /*if (viewModel.bot != null) {
+        WindowWithBar(
+            onCloseRequest = {}
+        ) {
+            ChatWindow(viewModel)
+        }
+    }*/
 }

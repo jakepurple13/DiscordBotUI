@@ -5,18 +5,21 @@ import dev.kord.core.entity.Guild
 import dev.kord.core.entity.channel.GuildChannel
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.event.Event
-import dev.kord.rest.builder.message.create.embed
+import discordbot.MarvelSnapExtension
+import discordbot.NekoExtension
+import discordbot.Network
 import discordbot.Purple
-import discordbot.Red
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
-import moe.tlaster.precompose.viewmodel.ViewModel
-import moe.tlaster.precompose.viewmodel.viewModelScope
 import stablediffusion.StableDiffusion
+import stablediffusion.StableDiffusionNetwork
 
-class DiscordBotViewModel : ViewModel() {
+class DiscordBotViewModel {
+
+    val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     var bot: ExtensibleBot? by mutableStateOf(null)
         private set
@@ -63,7 +66,8 @@ class DiscordBotViewModel : ViewModel() {
             }
 
             extensions {
-                //add { MarvelSnapExtension(network) }
+                add { NekoExtension(Network(), StableDiffusionNetwork()) }
+                add { MarvelSnapExtension(Network()) }
                 StableDiffusion.addToKordExtensions()
                 help {
                     pingInReply = true
@@ -102,32 +106,8 @@ class DiscordBotViewModel : ViewModel() {
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        Runtime.getRuntime().addShutdownHook(
-            Thread {
-                runBlocking {
-                    /*if (SHOW_STARTUP_SHUTDOWN_MESSAGES) {
-                        bot?.kordRef.guilds
-                            ?.onEach { g ->
-                                g.systemChannel?.createMessage {
-                                    suppressNotifications = true
-                                    embed {
-                                        title = "Shutting Down for maintenance and updates..."
-                                        timestamp = Clock.System.now()
-                                        description = "Please wait while I go through some maintenance."
-                                        thumbnail {
-                                            url = "https://media.tenor.com/YTPLqiB6gLsAAAAC/sowwy-sorry.gif"
-                                        }
-                                        color = Red
-                                    }
-                                }
-                            }
-                            .lastOrNull()
-                    }*/
-                    bot?.stop()
-                }
-            }
-        )
+    fun selectGuild(guild: Guild?) {
+        selectedGuild = guild
+        selectedChannel = null
     }
 }
