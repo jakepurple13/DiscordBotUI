@@ -71,6 +71,7 @@ fun MessageRow(viewModel: DiscordBotViewModel) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier
+            .padding(horizontal = 4.dp)
             .fillMaxWidth()
             .animateContentSize()
     ) {

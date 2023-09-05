@@ -12,7 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.kotlindiscord.kord.extensions.commands.events.PublicSlashCommandInvocationEvent
+import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
 import dev.kord.core.event.message.MessageCreateEvent
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.flow.collectAsStateWithLifecycle
@@ -105,15 +105,23 @@ fun DiscordBotView(
                         is EventType.KordEvent -> {
                             var showMore by remember { mutableStateOf(false) }
                             when (val event = it.event) {
-                                is PublicSlashCommandInvocationEvent -> {
+                                is GuildChatInputCommandInteractionCreateEvent -> {
                                     OutlinedCard(
                                         onClick = { showMore = !showMore },
                                         modifier = Modifier.animateContentSize()
                                     ) {
                                         ListItem(
-                                            headlineContent = {
+                                            overlineContent = { Text(event.interaction.user.effectiveName) },
+                                            headlineContent = { Text("Command: " + event.interaction.invokedCommandName) },
+                                            supportingContent = {
                                                 Text(
-                                                    event.toString(),
+                                                    event.interaction.data.data
+                                                        .options
+                                                        .value
+                                                        .orEmpty()
+                                                        .joinToString("\n\n") {
+                                                            "${it.name} = ${it.value.value?.value}"
+                                                        },
                                                     maxLines = if (showMore) Int.MAX_VALUE else 3
                                                 )
                                             },
