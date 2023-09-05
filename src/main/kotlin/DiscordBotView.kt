@@ -1,34 +1,52 @@
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.StopCircle
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.kotlindiscord.kord.extensions.commands.events.PublicSlashCommandInvocationEvent
-import com.kotlindiscord.kord.extensions.time.TimestampType
-import com.kotlindiscord.kord.extensions.time.toDiscord
 import dev.kord.core.event.message.MessageCreateEvent
 import kotlinx.coroutines.launch
+import moe.tlaster.precompose.flow.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DiscordBotView(viewModel: DiscordBotViewModel) {
+fun DiscordBotView(
+    viewModel: DiscordBotViewModel,
+    onShowSettings: () -> Unit,
+) {
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    val scrollToBottom by DataStore.scrollToBottom.collectAsStateWithLifecycle(true)
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Events") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Events") },
+                navigationIcon = {
+                    IconButton(
+                        onClick = { viewModel.showBotScreen = false },
+                        enabled = viewModel.bot == null
+                    ) { Icon(Icons.Default.ArrowBack, null) }
+                },
+            )
+        },
         bottomBar = {
             Column {
-                MessageRow(viewModel)
+                Surface(
+                    modifier = Modifier.fillMaxWidth()
+                ) { MessageRow(viewModel) }
                 BottomAppBar(
-                    actions = {},
+                    actions = {
+                        IconButton(onClick = onShowSettings) { Icon(Icons.Default.Settings, null) }
+                    },
                     floatingActionButton = {
                         var showStopDialog by remember { mutableStateOf(false) }
 
@@ -56,82 +74,124 @@ fun DiscordBotView(viewModel: DiscordBotViewModel) {
                             )
                         }
 
-                        FloatingActionButton(
-                            onClick = {
-                                showStopDialog = true
-                            }
-                        ) { Icon(Icons.Default.StopCircle, null) }
+                        if (viewModel.bot == null) {
+                            FloatingActionButton(
+                                onClick = { scope.launch { viewModel.startBot() } }
+                            ) { Icon(Icons.Default.PlayCircle, null) }
+                        } else {
+                            FloatingActionButton(
+                                onClick = { showStopDialog = true }
+                            ) { Icon(Icons.Default.StopCircle, null) }
+                        }
                     }
                 )
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+        LaunchedEffect(viewModel.eventList.size, scrollToBottom) {
+            if (scrollToBottom) listState.animateScrollToItem(viewModel.eventList.lastIndex)
+        }
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            state = listState,
+            contentPadding = padding
+        ) {
+            items(
+                viewModel.eventList,
+                key = { it.toString() }
             ) {
-                items(viewModel.eventList) {
-                    var showMore by remember { mutableStateOf(false) }
-                    SelectionContainer {
-                        when (val event = it) {
-                            is PublicSlashCommandInvocationEvent -> {
-                                OutlinedCard(
-                                    onClick = { showMore = !showMore },
-                                    modifier = Modifier.animateContentSize()
-                                ) {
-                                    ListItem(
-                                        headlineContent = {
-                                            Text(
-                                                event.toString(),
-                                                maxLines = if (showMore) Int.MAX_VALUE else 3
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-
-                            is MessageCreateEvent -> {
-                                OutlinedCard(
-                                    onClick = { showMore = !showMore },
-                                    modifier = Modifier.animateContentSize()
-                                ) {
-                                    ListItem(
-                                        overlineContent = {
-                                            Column {
-                                                Text(event.member?.effectiveName.orEmpty())
-                                                Text(event.message.timestamp.toDiscord(TimestampType.LongDateTime))
+                SelectionContainer {
+                    when (it) {
+                        is EventType.KordEvent -> {
+                            var showMore by remember { mutableStateOf(false) }
+                            when (val event = it.event) {
+                                is PublicSlashCommandInvocationEvent -> {
+                                    OutlinedCard(
+                                        onClick = { showMore = !showMore },
+                                        modifier = Modifier.animateContentSize()
+                                    ) {
+                                        ListItem(
+                                            headlineContent = {
+                                                Text(
+                                                    event.toString(),
+                                                    maxLines = if (showMore) Int.MAX_VALUE else 3
+                                                )
+                                            },
+                                            trailingContent = {
+                                                Icon(
+                                                    if (showMore) Icons.Default.ArrowDropUp
+                                                    else Icons.Default.ArrowDropDown,
+                                                    null
+                                                )
                                             }
-                                        },
-                                        headlineContent = {
-                                            Text(
-                                                event.message.content,
-                                                maxLines = if (showMore) Int.MAX_VALUE else 3
-                                            )
-                                        }
-                                    )
+                                        )
+                                    }
                                 }
-                            }
 
-                            else -> {
-                                Card(
-                                    onClick = { showMore = !showMore },
-                                    modifier = Modifier.animateContentSize()
-                                ) {
-                                    ListItem(
-                                        headlineContent = { Text(event::class.toString()) },
-                                        supportingContent = {
-                                            Text(
-                                                event.toString(),
-                                                maxLines = if (showMore) Int.MAX_VALUE else 3
-                                            )
-                                        }
-                                    )
+                                is MessageCreateEvent -> {
+                                    OutlinedCard(
+                                        onClick = { showMore = !showMore },
+                                        modifier = Modifier.animateContentSize()
+                                    ) {
+                                        ListItem(
+                                            overlineContent = {
+                                                Column {
+                                                    Text(event.member?.effectiveName.orEmpty())
+                                                    Text(simpleDateTimeFormatter.format(event.message.timestamp.toEpochMilliseconds()))
+                                                }
+                                            },
+                                            headlineContent = {
+                                                Text(
+                                                    event.message.content,
+                                                    maxLines = if (showMore) Int.MAX_VALUE else 3
+                                                )
+                                            },
+                                            trailingContent = {
+                                                Icon(
+                                                    if (showMore) Icons.Default.ArrowDropUp
+                                                    else Icons.Default.ArrowDropDown,
+                                                    null
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+
+                                else -> {
+                                    Card(
+                                        onClick = { showMore = !showMore },
+                                        modifier = Modifier.animateContentSize()
+                                    ) {
+                                        ListItem(
+                                            headlineContent = { Text(event::class.toString()) },
+                                            supportingContent = {
+                                                Text(
+                                                    event.toString(),
+                                                    maxLines = if (showMore) Int.MAX_VALUE else 3
+                                                )
+                                            },
+                                            trailingContent = {
+                                                Icon(
+                                                    if (showMore) Icons.Default.ArrowDropUp
+                                                    else Icons.Default.ArrowDropDown,
+                                                    null
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    Divider()
+                        is EventType.Running -> {
+                            ElevatedCard {
+                                ListItem(
+                                    overlineContent = { Text(it.timestamp) },
+                                    headlineContent = { Text("Starting") }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

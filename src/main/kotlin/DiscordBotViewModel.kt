@@ -16,10 +16,14 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import stablediffusion.StableDiffusion
 import stablediffusion.StableDiffusionNetwork
+import java.text.SimpleDateFormat
+import java.util.*
 
 class DiscordBotViewModel {
 
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    var showBotScreen by mutableStateOf(false)
 
     var bot: ExtensibleBot? by mutableStateOf(null)
         private set
@@ -36,7 +40,7 @@ class DiscordBotViewModel {
 
     var tokenForBot by mutableStateOf("")
 
-    val eventList = mutableStateListOf<Event>()
+    val eventList = mutableStateListOf<EventType>()
 
     init {
         botToken
@@ -59,9 +63,9 @@ class DiscordBotViewModel {
 
         snapshotFlow { bot }
             .filterNotNull()
-            .onEach { eventList.clear() }
+            .onEach { eventList.add(EventType.Running(simpleDateTimeFormatter.format(System.currentTimeMillis()))) }
             .flatMapLatest { it.kordRef.events }
-            .onEach { eventList.add(it) }
+            .onEach { eventList.add(EventType.KordEvent(it)) }
             .launchIn(viewModelScope)
     }
 
@@ -91,6 +95,7 @@ class DiscordBotViewModel {
             }
         }
 
+        showBotScreen = true
         bot?.startAsync()
     }
 
@@ -123,3 +128,10 @@ class DiscordBotViewModel {
         }
     }
 }
+
+sealed class EventType {
+    data class Running(val timestamp: String) : EventType()
+    data class KordEvent(val event: Event) : EventType(), Event by event
+}
+
+val simpleDateTimeFormatter = SimpleDateFormat("MM/dd/yy HH:mm", Locale.getDefault())

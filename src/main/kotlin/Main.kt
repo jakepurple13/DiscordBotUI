@@ -22,10 +22,13 @@ import kotlinx.coroutines.launch
 
 @Composable
 @Preview
-fun App(vm: DiscordBotViewModel) {
-    Crossfade(vm.bot) { target ->
-        if (target != null) {
-            DiscordBotView(vm)
+fun App(
+    vm: DiscordBotViewModel,
+    onShowSettings: () -> Unit,
+) {
+    Crossfade(vm.showBotScreen) { target ->
+        if (target) {
+            DiscordBotView(vm, onShowSettings)
         } else {
             TokenSetup(vm)
         }
@@ -78,10 +81,20 @@ fun TokenSetup(vm: DiscordBotViewModel) {
 
 fun main() = application {
     val viewModel = remember { DiscordBotViewModel() }
+    var showSettings by remember { mutableStateOf(false) }
     WindowWithBar(
         onCloseRequest = ::exitApplication
     ) {
-        App(viewModel)
+        App(
+            viewModel,
+            onShowSettings = { showSettings = true }
+        )
+    }
+
+    if (showSettings) {
+        SettingsScreen(
+            onClose = { showSettings = false }
+        )
     }
 
     /*if (viewModel.bot != null) {
