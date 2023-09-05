@@ -7,47 +7,70 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.launch
 
 @Composable
 @Preview
 fun App(vm: DiscordBotViewModel) {
-    val scope = rememberCoroutineScope()
-
     Crossfade(vm.bot) { target ->
         if (target != null) {
             DiscordBotView(vm)
         } else {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Column {
-                    Row {
-                        TextField(
-                            value = vm.tokenForBot,
-                            onValueChange = { vm.tokenForBot = it },
-                            visualTransformation = PasswordVisualTransformation()
-                        )
+            TokenSetup(vm)
+        }
+    }
+}
+
+@Composable
+fun TokenSetup(vm: DiscordBotViewModel) {
+    val scope = rememberCoroutineScope()
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row {
+                IconButton(
+                    onClick = { vm.showSavedToken() }
+                ) { Icon(Icons.Default.Password, null) }
+                var showPassword by remember { mutableStateOf(false) }
+                TextField(
+                    value = vm.tokenForBot,
+                    onValueChange = { vm.tokenForBot = it },
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
                         IconButton(
-                            onClick = { vm.setToken() }
-                        ) { Icon(Icons.Default.Save, null) }
+                            onClick = { showPassword = !showPassword }
+                        ) {
+                            Icon(
+                                if (showPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                null
+                            )
+                        }
                     }
-                    Button(
-                        onClick = { scope.launch { vm.startBot() } }
-                    ) {
-                        Text("Start Bot")
-                    }
-                }
+                )
+                IconButton(
+                    onClick = { vm.setToken() }
+                ) { Icon(Icons.Default.Save, null) }
+            }
+            Button(
+                onClick = { scope.launch { vm.startBot() } },
+                enabled = vm.canStartBot
+            ) {
+                Text("Start Bot")
             }
         }
     }

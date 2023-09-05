@@ -19,12 +19,14 @@ import stablediffusion.StableDiffusionNetwork
 
 class DiscordBotViewModel {
 
-    val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     var bot: ExtensibleBot? by mutableStateOf(null)
         private set
 
-    val botToken = DataStore.botToken
+    private val botToken = DataStore.botToken
+    var canStartBot by mutableStateOf(false)
+        private set
     
     val guildList = mutableStateListOf<Guild>()
     var selectedGuild by mutableStateOf<Guild?>(null)
@@ -37,6 +39,10 @@ class DiscordBotViewModel {
     val eventList = mutableStateListOf<Event>()
 
     init {
+        botToken
+            .onEach { canStartBot = it.isNotEmpty() }
+            .launchIn(viewModelScope)
+
         snapshotFlow { bot }
             .filterNotNull()
             .onEach { guildList.clear() }
@@ -109,5 +115,11 @@ class DiscordBotViewModel {
     fun selectGuild(guild: Guild?) {
         selectedGuild = guild
         selectedChannel = null
+    }
+
+    fun showSavedToken() {
+        viewModelScope.launch {
+            tokenForBot = botToken.first()
+        }
     }
 }
