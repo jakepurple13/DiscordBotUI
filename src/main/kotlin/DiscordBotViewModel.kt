@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class DiscordBotViewModel(
-    private val botCreation: suspend (token: String) -> ExtensibleBot,
+    private val botCreation: suspend (token: String?) -> ExtensibleBot,
     private val startUpMessages: suspend (Guild) -> Unit = {},
     private val shutdownMessages: suspend (Guild) -> Unit = {},
 ) {
@@ -65,7 +65,7 @@ class DiscordBotViewModel(
     }
 
     suspend fun startBot() {
-        runCatching { bot = botCreation(botToken.filterNotNull().first()) }
+        runCatching { bot = botCreation(botToken.firstOrNull()) }
             .onSuccess {
                 if (DataStore.sendStartup.flow.firstOrNull() == true) {
                     bot
