@@ -39,7 +39,7 @@ class DiscordBotViewModel(
 
     init {
         botToken
-            .onEach { canStartBot = it.isNotEmpty() }
+            .onEach { canStartBot = !it.isNullOrEmpty() }
             .launchIn(viewModelScope)
 
         snapshotFlow { bot }
@@ -114,7 +114,7 @@ class DiscordBotViewModel(
 
     fun showSavedToken() {
         viewModelScope.launch {
-            tokenForBot = botToken.first()
+            tokenForBot = botToken.firstOrNull().orEmpty()
         }
     }
 }

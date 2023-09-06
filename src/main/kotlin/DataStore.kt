@@ -1,6 +1,7 @@
 import androidx.datastore.preferences.core.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import okio.Path.Companion.toPath
 
@@ -12,7 +13,7 @@ internal val SEND_SHUTDOWN = booleanPreferencesKey("SEND_SHUTDOWN")
 object DataStore {
     private val dataStore = PreferenceDataStoreFactory.createWithPath { "androidx.preferences_pb".toPath() }
 
-    val botToken: Flow<String> = dataStore.data.mapNotNull { it[BOT_TOKEN] }
+    val botToken: Flow<String?> = dataStore.data.map { it[BOT_TOKEN] }
 
     suspend fun updateToken(token: String) {
         updatePref(BOT_TOKEN, token)
