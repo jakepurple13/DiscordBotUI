@@ -37,7 +37,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import stablediffusion.StableDiffusion
-import stablediffusion.StableDiffusionNetwork
 
 @Composable
 @Preview
@@ -202,8 +201,9 @@ fun main() {
                 }
 
                 extensions {
-                    add { NekoExtension(Network(), StableDiffusionNetwork()) }
-                    add { MarvelSnapExtension(Network()) }
+                    val network = Network()
+                    add { NekoExtension(network) }
+                    add { MarvelSnapExtension(network) }
                     StableDiffusion.addToKordExtensions()
                     help {
                         pingInReply = true

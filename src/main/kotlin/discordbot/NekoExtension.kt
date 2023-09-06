@@ -10,11 +10,9 @@ import com.kotlindiscord.kord.extensions.extensions.publicSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
 import dev.kord.rest.builder.message.create.embed
 import io.ktor.client.request.forms.*
-import stablediffusion.StableDiffusionNetwork
 
 class NekoExtension(
     private val network: Network,
-    private val stableDiffusionNetwork: StableDiffusionNetwork,
 ) : Extension() {
     override val name: String = "neko"
 
@@ -27,20 +25,9 @@ class NekoExtension(
                 respond {
                     when (arguments.nekoType) {
                         NekoType.Random -> network.loadRandomImage()
-                        NekoType.Amun -> stableDiffusionNetwork.stableDiffusion("")
-                            .map {
-                                it.imagesAsByteChannel()
-                                    .first()
-                                    .let {
-                                        LocalNekoImage(
-                                            byteReadChannel = it,
-                                            artist = "Stable Diffusion"
-                                        )
-                                    }
-                            }//network.pixrayLoad()
                         NekoType.Cat -> network.catApi()
                     }
-                        .onSuccess { model ->
+                        .onSuccess { model: NekoImageType ->
                             content = "Here is your neko image!"
                             when (model) {
                                 is LocalNekoImage -> {
@@ -70,14 +57,12 @@ class NekoExtension(
             description = "Get neko!"
             typeName = "Neko"
             choice("Random", NekoType.Random)
-            choice("Amun", NekoType.Amun)
             choice("Cat", NekoType.Cat)
         }
     }
 
     enum class NekoType(override val readableName: String) : ChoiceEnum {
         Random("Random"),
-        Amun("Amun"),
         Cat("Cat")
     }
 }
