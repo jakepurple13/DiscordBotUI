@@ -44,6 +44,7 @@ class StableDiffusionExtension(
             description = "Get an ai generated image"
 
             action {
+                channel.type()
                 respond {
                         stableDiffusionNetwork.stableDiffusion(
                             prompt = arguments.prompt,
