@@ -38,6 +38,9 @@ fun DiscordBotView(
                         enabled = viewModel.bot == null
                     ) { Icon(Icons.Default.ArrowBack, null) }
                 },
+                actions = {
+                    IconButton(onClick = onShowSettings) { Icon(Icons.Default.Settings, null) }
+                }
             )
         },
         bottomBar = {
@@ -46,9 +49,7 @@ fun DiscordBotView(
                     modifier = Modifier.fillMaxWidth()
                 ) { MessageRow(viewModel) }
                 BottomAppBar(
-                    actions = {
-                        IconButton(onClick = onShowSettings) { Icon(Icons.Default.Settings, null) }
-                    },
+                    actions = {},
                     floatingActionButton = {
                         var showStopDialog by remember { mutableStateOf(false) }
 
@@ -76,22 +77,39 @@ fun DiscordBotView(
                             )
                         }
 
-                        if (viewModel.bot == null) {
-                            FloatingActionButton(
-                                onClick = { scope.launch { viewModel.startBot() } }
-                            ) { Icon(Icons.Default.PlayCircle, null) }
-                        } else {
-                            FloatingActionButton(
-                                onClick = { showStopDialog = true }
-                            ) { Icon(Icons.Default.StopCircle, null) }
-                        }
+                        val action: () -> Unit by rememberUpdatedState(
+                            if (viewModel.bot == null) {
+                                { scope.launch { viewModel.startBot() } }
+                            } else {
+                                { showStopDialog = true }
+                            }
+                        )
+
+                        ExtendedFloatingActionButton(
+                            onClick = action,
+                            icon = {
+                                Icon(
+                                    if (viewModel.bot == null) Icons.Default.PlayCircle
+                                    else Icons.Default.StopCircle,
+                                    null
+                                )
+                            },
+                            text = {
+                                Text(
+                                    if (viewModel.bot == null) "Start Bot"
+                                    else "Stop Bot"
+                                )
+                            },
+                            expanded = listState.isScrollingUp()
+                        )
                     }
                 )
             }
         }
     ) { padding ->
         LaunchedEffect(viewModel.eventList.size, scrollToBottom) {
-            if (scrollToBottom) listState.animateScrollToItem(viewModel.eventList.lastIndex)
+            if (scrollToBottom && viewModel.eventList.isNotEmpty())
+                listState.animateScrollToItem(viewModel.eventList.lastIndex)
         }
         Box(
             modifier = Modifier.padding(padding)
@@ -100,9 +118,7 @@ fun DiscordBotView(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 state = listState,
             ) {
-                items(
-                    viewModel.eventList
-                ) {
+                items(viewModel.eventList) {
                     SelectionContainer {
                         when (it) {
                             is EventType.KordEvent -> {

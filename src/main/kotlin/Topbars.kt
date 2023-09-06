@@ -5,7 +5,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.window.WindowDraggableArea
@@ -34,6 +33,7 @@ import org.jetbrains.skiko.hostOs
 @Composable
 internal fun WindowWithBar(
     onCloseRequest: () -> Unit,
+    state: WindowState = rememberWindowState(),
     canClose: Boolean = true,
     visible: Boolean = true,
     windowTitle: String = "",
@@ -42,7 +42,6 @@ internal fun WindowWithBar(
     frameWindowScope: @Composable (FrameWindowScope.() -> Unit) = {},
     content: @Composable () -> Unit,
 ) {
-    val state = rememberWindowState()
     PreComposeWindow(
         state = state,
         undecorated = true,
@@ -50,7 +49,7 @@ internal fun WindowWithBar(
         onCloseRequest = onCloseRequest,
         visible = visible,
     ) {
-        MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
+        CustomMaterialTheme {
             frameWindowScope()
             val hasFocus = LocalWindowInfo.current.isWindowFocused
             Surface(

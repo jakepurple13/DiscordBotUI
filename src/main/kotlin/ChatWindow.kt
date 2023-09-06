@@ -71,31 +71,34 @@ fun MessageRow(viewModel: DiscordBotViewModel) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier
-            .padding(horizontal = 4.dp)
+            .padding(horizontal = 8.dp)
             .fillMaxWidth()
             .animateContentSize()
     ) {
         var showGuildDropDown by remember { mutableStateOf(false) }
-        DropdownMenu(
-            showGuildDropDown,
-            onDismissRequest = { showGuildDropDown = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text("Select a Guild") },
-                onClick = { viewModel.selectGuild(null) },
-                leadingIcon = { RadioButton(selected = viewModel.selectedGuild == null, onClick = null) }
-            )
-            viewModel.guildList.forEach {
-                DropdownMenuItem(
-                    text = { Text(it.name) },
-                    onClick = { viewModel.selectGuild(it) },
-                    leadingIcon = { RadioButton(selected = it == viewModel.selectedGuild, onClick = null) }
-                )
-            }
-        }
         Card(
             onClick = { showGuildDropDown = true }
         ) {
+            DropdownMenu(
+                showGuildDropDown,
+                onDismissRequest = { showGuildDropDown = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Select a Guild") },
+                    onClick = { viewModel.selectGuild(null) },
+                    leadingIcon = { RadioButton(selected = viewModel.selectedGuild == null, onClick = null) }
+                )
+                viewModel.guildList.forEach {
+                    DropdownMenuItem(
+                        text = { Text(it.name) },
+                        onClick = {
+                            viewModel.selectGuild(it)
+                            showGuildDropDown = false
+                        },
+                        leadingIcon = { RadioButton(selected = it == viewModel.selectedGuild, onClick = null) }
+                    )
+                }
+            }
             Text(
                 viewModel.selectedGuild?.name ?: "Select a Guild",
                 modifier = Modifier.padding(4.dp)
@@ -104,36 +107,39 @@ fun MessageRow(viewModel: DiscordBotViewModel) {
 
         AnimatedVisibility(viewModel.channelList.isNotEmpty()) {
             var showChannelDropDown by remember { mutableStateOf(false) }
-            DropdownMenu(
-                showChannelDropDown,
-                onDismissRequest = { showChannelDropDown = false }
+            Card(
+                onClick = { showChannelDropDown = true }
             ) {
-                DropdownMenuItem(
-                    text = { Text("Select a Guild") },
-                    onClick = { viewModel.selectedChannel = null },
-                    leadingIcon = {
-                        RadioButton(
-                            selected = viewModel.selectedChannel == null,
-                            onClick = null
-                        )
-                    }
-                )
-                viewModel.channelList.forEach {
+                DropdownMenu(
+                    showChannelDropDown,
+                    onDismissRequest = { showChannelDropDown = false }
+                ) {
                     DropdownMenuItem(
-                        text = { Text(it.name) },
-                        onClick = { viewModel.selectedChannel = it },
+                        text = { Text("Select a Guild") },
+                        onClick = { viewModel.selectedChannel = null },
                         leadingIcon = {
                             RadioButton(
-                                selected = it == viewModel.selectedChannel,
+                                selected = viewModel.selectedChannel == null,
                                 onClick = null
                             )
                         }
                     )
+                    viewModel.channelList.forEach {
+                        DropdownMenuItem(
+                            text = { Text(it.name) },
+                            onClick = {
+                                viewModel.selectedChannel = it
+                                showChannelDropDown = false
+                            },
+                            leadingIcon = {
+                                RadioButton(
+                                    selected = it == viewModel.selectedChannel,
+                                    onClick = null
+                                )
+                            }
+                        )
+                    }
                 }
-            }
-            Card(
-                onClick = { showChannelDropDown = true }
-            ) {
                 Text(
                     viewModel.selectedChannel?.name ?: "Select a Channel",
                     modifier = Modifier.padding(4.dp)

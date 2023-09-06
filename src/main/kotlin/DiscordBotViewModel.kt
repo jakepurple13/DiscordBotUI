@@ -1,19 +1,18 @@
 import androidx.compose.runtime.*
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.behavior.edit
 import dev.kord.core.entity.Guild
 import dev.kord.core.entity.channel.GuildChannel
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.event.Event
-import discordbot.MarvelSnapExtension
-import discordbot.NekoExtension
-import discordbot.Network
-import discordbot.Purple
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import dev.kord.rest.builder.message.create.embed
+import dev.kord.rest.builder.message.modify.actionRow
+import dev.kord.rest.builder.message.modify.embed
+import discordbot.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import stablediffusion.StableDiffusion
 import stablediffusion.StableDiffusionNetwork
 import java.text.SimpleDateFormat
@@ -22,6 +21,7 @@ import java.util.*
 class DiscordBotViewModel {
 
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val botScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     var showBotScreen by mutableStateOf(false)
 
@@ -31,7 +31,7 @@ class DiscordBotViewModel {
     private val botToken = DataStore.botToken
     var canStartBot by mutableStateOf(false)
         private set
-    
+
     val guildList = mutableStateListOf<Guild>()
     var selectedGuild by mutableStateOf<Guild?>(null)
 
@@ -95,11 +95,67 @@ class DiscordBotViewModel {
             }
         }
 
+        if (DataStore.sendStartup.flow.firstOrNull() == true) {
+            bot
+                ?.kordRef
+                ?.guilds
+                ?.mapNotNull { g ->
+                    g.systemChannel?.createMessage {
+                        suppressNotifications = true
+                        content = "NekoBot is booting up...Please wait..."
+                    }
+                }
+                ?.onEach {
+                    it.edit {
+                        content = "NekoBot is Online!"
+                        embed {
+                            title = "NekoBot is Online!"
+                            description = """
+                                Meow is back online!
+                                
+                                To get more Stable Diffusion models or loras to suggest, press on the buttons below!
+                                To use Stable Diffusion, type `/stablediffusion`
+                                To get a random neko image, type `/neko random`
+                                To get a random cat image, type `/neko cat`
+                                To view Marvel Snap cards, type `/snapcards`
+                            """.trimIndent()
+                            color = Emerald
+                        }
+                        actionRow {
+                            linkButton("https://huggingface.co") { label = "Stable Diffusion Models" }
+                            linkButton("https://civitai.com/") { label = "Models and Loras" }
+                        }
+                    }
+                }
+                ?.launchIn(botScope)
+        }
+
         showBotScreen = true
         bot?.startAsync()
     }
 
     suspend fun stopBot() {
+        if (DataStore.sendShutdown.flow.firstOrNull() == true) {
+            bot
+                ?.kordRef
+                ?.guilds
+                ?.onEach { g ->
+                    g.systemChannel?.createMessage {
+                        suppressNotifications = true
+                        embed {
+                            title = "Shutting Down for maintenance and updates..."
+                            timestamp = Clock.System.now()
+                            description = "Please wait while I go through some maintenance."
+                            thumbnail {
+                                url = "https://media.tenor.com/YTPLqiB6gLsAAAAC/sowwy-sorry.gif"
+                            }
+                            color = Red
+                        }
+                    }
+                }
+                ?.lastOrNull()
+        }
+        botScope.cancel()
         bot?.stop()
         bot = null
     }

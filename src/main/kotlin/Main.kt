@@ -17,7 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.MenuBar
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -76,6 +85,12 @@ fun TokenSetup(vm: DiscordBotViewModel) {
             ) {
                 Text("Start Bot")
             }
+            Button(
+                onClick = { vm.showBotScreen = true },
+                enabled = vm.canStartBot
+            ) {
+                Text("Enter Without Starting")
+            }
         }
     }
 }
@@ -87,21 +102,66 @@ fun main() {
         Thread {
             runBlocking {
                 println("Shutting down")
-                viewModel.bot?.stop()
+                viewModel.stopBot()
             }
         }
     )
 
     application {
         var showSettings by remember { mutableStateOf(false) }
+        var showBotOptions by remember { mutableStateOf(false) }
+        val state = rememberWindowState()
 
         WindowWithBar(
             onCloseRequest = ::exitApplication,
-            canClose = viewModel.bot == null
+            canClose = viewModel.bot == null,
+            state = state,
+            frameWindowScope = {
+                MenuBar {
+                    Menu("Bot Options") {
+                        CheckboxItem(
+                            text = "Show Bot Options",
+                            checked = showBotOptions,
+                            onCheckedChange = { showBotOptions = it }
+                        )
+
+                        CheckboxItem(
+                            text = "Show Settings",
+                            checked = showSettings,
+                            onCheckedChange = { showSettings = it }
+                        )
+                    }
+                }
+            }
         ) {
             App(
-                viewModel,
+                vm = viewModel,
                 onShowSettings = { showSettings = true }
+            )
+        }
+
+        if (showBotOptions) {
+            val windowPosition = state.position
+            val botOptionsState = rememberWindowState(
+                position = WindowPosition.Aligned(Alignment.CenterEnd),
+                size = DpSize(300.dp, 600.dp)
+            )
+
+            LaunchedEffect(windowPosition) {
+                snapshotFlow {
+                    if (windowPosition is WindowPosition.Absolute)
+                        windowPosition.copy(x = windowPosition.x + state.size.width + 25.dp)
+                    else
+                        WindowPosition.Aligned(Alignment.CenterEnd)
+                }
+                    .distinctUntilChanged()
+                    .debounce(200)
+                    .onEach { botOptionsState.position = it }
+                    .launchIn(this)
+            }
+
+            BotOptionsViewController(
+                botOptionsState = botOptionsState,
             )
         }
 
