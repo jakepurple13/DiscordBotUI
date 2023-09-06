@@ -19,10 +19,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.MenuBar
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.*
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.behavior.edit
@@ -111,6 +108,7 @@ fun DiscordBotUI(
     botCreation: suspend (token: String?) -> ExtensibleBot,
     startUpMessages: suspend (Guild) -> Unit = {},
     shutdownMessages: suspend (Guild) -> Unit = {},
+    customUi: @Composable ApplicationScope.() -> Unit = {},
 ) {
     val viewModel = DiscordBotViewModel(
         botCreation = botCreation,
@@ -190,6 +188,8 @@ fun DiscordBotUI(
                 onClose = { showSettings = false }
             )
         }
+
+        customUi()
     }
 }
 
