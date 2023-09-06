@@ -29,10 +29,6 @@ import dev.kord.rest.builder.message.modify.actionRow
 import dev.kord.rest.builder.message.modify.embed
 import discordbot.*
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
@@ -165,16 +161,11 @@ fun DiscordBotUI(
             )
 
             LaunchedEffect(windowPosition) {
-                snapshotFlow {
-                    if (windowPosition is WindowPosition.Absolute)
+                botOptionsState.position =
+                    if (windowPosition is WindowPosition.Absolute && state.placement != WindowPlacement.Maximized)
                         windowPosition.copy(x = windowPosition.x + state.size.width + 25.dp)
                     else
                         WindowPosition.Aligned(Alignment.CenterEnd)
-                }
-                    .distinctUntilChanged()
-                    .debounce(200)
-                    .onEach { botOptionsState.position = it }
-                    .launchIn(this)
             }
 
             BotOptionsViewController(

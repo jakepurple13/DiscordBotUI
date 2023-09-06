@@ -167,7 +167,7 @@ class StableDiffusionExtension(
         }
     }
 
-    inner class DiffusionArgs : Arguments() {
+    class DiffusionArgs : Arguments() {
         val prompt by string {
             name = "prompt"
             description = "Give me a prompt!"
