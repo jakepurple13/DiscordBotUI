@@ -14,16 +14,12 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.configureSwingGlobalsForCompose
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.window.awaitApplication
-import kotlinx.coroutines.Dispatchers
+import androidx.compose.ui.window.application
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 @Composable
 @Preview
@@ -84,14 +80,19 @@ fun TokenSetup(vm: DiscordBotViewModel) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
-fun main() = runBlocking {
+fun main() {
     val viewModel = DiscordBotViewModel()
-    if (System.getProperty("compose.application.configure.swing.globals") == "true") {
-        configureSwingGlobalsForCompose()
-    }
 
-    awaitApplication {
+    Runtime.getRuntime().addShutdownHook(
+        Thread {
+            runBlocking {
+                println("Shutting down")
+                viewModel.bot?.stop()
+            }
+        }
+    )
+
+    application {
         var showSettings by remember { mutableStateOf(false) }
 
         WindowWithBar(
@@ -110,15 +111,4 @@ fun main() = runBlocking {
             )
         }
     }
-
-    Runtime.getRuntime().addShutdownHook(
-        Thread {
-            runBlocking {
-                viewModel.bot?.stop()
-                println("Shutting down")
-            }
-        }
-    )
-
-    withContext(Dispatchers.IO) { Thread.currentThread().join() }
 }
