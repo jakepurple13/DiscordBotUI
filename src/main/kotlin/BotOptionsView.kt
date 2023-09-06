@@ -58,7 +58,12 @@ fun BotOptionsViewController(
 private fun BotOptionsView() {
     val scope = rememberCoroutineScope()
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Bot Options") }) },
+        topBar = {
+            Column {
+                TopAppBar(title = { Text("Bot Options") })
+                Divider(color = MaterialTheme.colorScheme.onSurface)
+            }
+        },
     ) { padding ->
         Box(
             modifier = Modifier.padding(padding)
