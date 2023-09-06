@@ -130,7 +130,13 @@ fun DiscordBotView(
                                             modifier = Modifier.animateContentSize()
                                         ) {
                                             ListItem(
-                                                overlineContent = { Text(event.interaction.user.effectiveName) },
+                                                overlineContent = {
+                                                    Column {
+                                                        Text("Username: " + event.interaction.user.username)
+                                                        Text("Global Name: " + event.interaction.user.globalName.orEmpty())
+                                                        Text("Effective Name: " + event.interaction.user.effectiveName)
+                                                    }
+                                                },
                                                 headlineContent = { Text("Command: " + event.interaction.invokedCommandName) },
                                                 supportingContent = {
                                                     Text(
@@ -163,8 +169,12 @@ fun DiscordBotView(
                                             ListItem(
                                                 overlineContent = {
                                                     Column {
-                                                        Text(event.member?.effectiveName.orEmpty())
-                                                        Text(simpleDateTimeFormatter.format(event.message.timestamp.toEpochMilliseconds()))
+                                                        Column {
+                                                            Text("Username: " + event.member?.username)
+                                                            Text("Global Name: " + event.member?.globalName.orEmpty())
+                                                            Text("Effective Name: " + event.member?.effectiveName)
+                                                            Text(simpleDateTimeFormatter.format(event.message.timestamp.toEpochMilliseconds()))
+                                                        }
                                                     }
                                                 },
                                                 headlineContent = {
