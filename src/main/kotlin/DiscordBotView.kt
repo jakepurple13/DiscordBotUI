@@ -1,15 +1,17 @@
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
@@ -91,117 +93,130 @@ fun DiscordBotView(
         LaunchedEffect(viewModel.eventList.size, scrollToBottom) {
             if (scrollToBottom) listState.animateScrollToItem(viewModel.eventList.lastIndex)
         }
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            state = listState,
-            contentPadding = padding
+        Box(
+            modifier = Modifier.padding(padding)
         ) {
-            items(
-                viewModel.eventList,
-                key = { it.toString() }
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                state = listState,
             ) {
-                SelectionContainer {
-                    when (it) {
-                        is EventType.KordEvent -> {
-                            var showMore by remember { mutableStateOf(false) }
-                            when (val event = it.event) {
-                                is GuildChatInputCommandInteractionCreateEvent -> {
-                                    OutlinedCard(
-                                        onClick = { showMore = !showMore },
-                                        modifier = Modifier.animateContentSize()
-                                    ) {
-                                        ListItem(
-                                            overlineContent = { Text(event.interaction.user.effectiveName) },
-                                            headlineContent = { Text("Command: " + event.interaction.invokedCommandName) },
-                                            supportingContent = {
-                                                Text(
-                                                    event.interaction.data.data
-                                                        .options
-                                                        .value
-                                                        .orEmpty()
-                                                        .joinToString("\n\n") {
-                                                            "${it.name} = ${it.value.value?.value}"
-                                                        },
-                                                    maxLines = if (showMore) Int.MAX_VALUE else 3
-                                                )
-                                            },
-                                            trailingContent = {
-                                                Icon(
-                                                    if (showMore) Icons.Default.ArrowDropUp
-                                                    else Icons.Default.ArrowDropDown,
-                                                    null
-                                                )
-                                            }
-                                        )
-                                    }
-                                }
-
-                                is MessageCreateEvent -> {
-                                    OutlinedCard(
-                                        onClick = { showMore = !showMore },
-                                        modifier = Modifier.animateContentSize()
-                                    ) {
-                                        ListItem(
-                                            overlineContent = {
-                                                Column {
-                                                    Text(event.member?.effectiveName.orEmpty())
-                                                    Text(simpleDateTimeFormatter.format(event.message.timestamp.toEpochMilliseconds()))
+                items(
+                    viewModel.eventList
+                ) {
+                    SelectionContainer {
+                        when (it) {
+                            is EventType.KordEvent -> {
+                                var showMore by remember { mutableStateOf(false) }
+                                when (val event = it.event) {
+                                    is GuildChatInputCommandInteractionCreateEvent -> {
+                                        OutlinedCard(
+                                            onClick = { showMore = !showMore },
+                                            modifier = Modifier.animateContentSize()
+                                        ) {
+                                            ListItem(
+                                                overlineContent = { Text(event.interaction.user.effectiveName) },
+                                                headlineContent = { Text("Command: " + event.interaction.invokedCommandName) },
+                                                supportingContent = {
+                                                    Text(
+                                                        event.interaction.data.data
+                                                            .options
+                                                            .value
+                                                            .orEmpty()
+                                                            .joinToString("\n\n") {
+                                                                "${it.name} = ${it.value.value?.value}"
+                                                            },
+                                                        maxLines = if (showMore) Int.MAX_VALUE else 3
+                                                    )
+                                                },
+                                                trailingContent = {
+                                                    Icon(
+                                                        if (showMore) Icons.Default.ArrowDropUp
+                                                        else Icons.Default.ArrowDropDown,
+                                                        null
+                                                    )
                                                 }
-                                            },
-                                            headlineContent = {
-                                                Text(
-                                                    event.message.content,
-                                                    maxLines = if (showMore) Int.MAX_VALUE else 3
-                                                )
-                                            },
-                                            trailingContent = {
-                                                Icon(
-                                                    if (showMore) Icons.Default.ArrowDropUp
-                                                    else Icons.Default.ArrowDropDown,
-                                                    null
-                                                )
-                                            }
-                                        )
+                                            )
+                                        }
                                     }
-                                }
 
-                                else -> {
-                                    Card(
-                                        onClick = { showMore = !showMore },
-                                        modifier = Modifier.animateContentSize()
-                                    ) {
-                                        ListItem(
-                                            headlineContent = { Text(event::class.toString()) },
-                                            supportingContent = {
-                                                Text(
-                                                    event.toString(),
-                                                    maxLines = if (showMore) Int.MAX_VALUE else 3
-                                                )
-                                            },
-                                            trailingContent = {
-                                                Icon(
-                                                    if (showMore) Icons.Default.ArrowDropUp
-                                                    else Icons.Default.ArrowDropDown,
-                                                    null
-                                                )
-                                            }
-                                        )
+                                    is MessageCreateEvent -> {
+                                        OutlinedCard(
+                                            onClick = { showMore = !showMore },
+                                            modifier = Modifier.animateContentSize()
+                                        ) {
+                                            ListItem(
+                                                overlineContent = {
+                                                    Column {
+                                                        Text(event.member?.effectiveName.orEmpty())
+                                                        Text(simpleDateTimeFormatter.format(event.message.timestamp.toEpochMilliseconds()))
+                                                    }
+                                                },
+                                                headlineContent = {
+                                                    Text(
+                                                        event.message.content,
+                                                        maxLines = if (showMore) Int.MAX_VALUE else 3
+                                                    )
+                                                },
+                                                trailingContent = {
+                                                    Icon(
+                                                        if (showMore) Icons.Default.ArrowDropUp
+                                                        else Icons.Default.ArrowDropDown,
+                                                        null
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+
+                                    else -> {
+                                        Card(
+                                            onClick = { showMore = !showMore },
+                                            modifier = Modifier.animateContentSize()
+                                        ) {
+                                            ListItem(
+                                                headlineContent = { Text(event::class.toString()) },
+                                                supportingContent = {
+                                                    Text(
+                                                        event.toString(),
+                                                        maxLines = if (showMore) Int.MAX_VALUE else 3
+                                                    )
+                                                },
+                                                trailingContent = {
+                                                    Icon(
+                                                        if (showMore) Icons.Default.ArrowDropUp
+                                                        else Icons.Default.ArrowDropDown,
+                                                        null
+                                                    )
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        is EventType.Running -> {
-                            ElevatedCard {
-                                ListItem(
-                                    overlineContent = { Text(it.timestamp) },
-                                    headlineContent = { Text("Starting") }
-                                )
+                            is EventType.Running -> {
+                                ElevatedCard {
+                                    ListItem(
+                                        overlineContent = { Text(it.timestamp) },
+                                        headlineContent = { Text("Starting") }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+            VerticalScrollbar(
+                adapter = rememberScrollbarAdapter(listState),
+                style = LocalScrollbarStyle.current.copy(
+                    hoverColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.50f),
+                    unhoverColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 4.dp)
+                    .fillMaxHeight()
+            )
         }
     }
 }

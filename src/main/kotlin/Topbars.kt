@@ -34,12 +34,13 @@ import org.jetbrains.skiko.hostOs
 @Composable
 internal fun WindowWithBar(
     onCloseRequest: () -> Unit,
+    canClose: Boolean = true,
     visible: Boolean = true,
     windowTitle: String = "",
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     bottomBar: @Composable () -> Unit = {},
     frameWindowScope: @Composable (FrameWindowScope.() -> Unit) = {},
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val state = rememberWindowState()
     PreComposeWindow(
@@ -94,9 +95,9 @@ internal fun WindowWithBar(
                                             .height(56.dp)
                                     ) {
                                         when (hostOs) {
-                                            OS.Linux -> LinuxTopBar(state, onCloseRequest, windowTitle)
-                                            OS.Windows -> WindowsTopBar(state, onCloseRequest, windowTitle)
-                                            OS.MacOS -> MacOsTopBar(state, onCloseRequest, windowTitle)
+                                            OS.Linux -> LinuxTopBar(state, onCloseRequest, windowTitle, canClose)
+                                            OS.Windows -> WindowsTopBar(state, onCloseRequest, windowTitle, canClose)
+                                            OS.MacOS -> MacOsTopBar(state, onCloseRequest, windowTitle, canClose)
                                             else -> {}
                                         }
                                     }
@@ -120,7 +121,7 @@ internal fun WindowWithBar(
 }
 
 @Composable
-private fun LinuxTopBar(state: WindowState, onExit: () -> Unit, windowTitle: String = "") {
+private fun LinuxTopBar(state: WindowState, onExit: () -> Unit, windowTitle: String = "", canClose: Boolean) {
     Box(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.align(Alignment.CenterEnd),
@@ -134,7 +135,7 @@ private fun LinuxTopBar(state: WindowState, onExit: () -> Unit, windowTitle: Str
                 .width(60.dp)
                 .hoverable(hoverInteraction)
 
-            CloseButton(onExit, modifier, isHovering)
+            CloseButton(onExit, modifier, isHovering, canClose)
 
             MinimizeButton(
                 onMinimize = { state.isMinimized = !state.isMinimized },
@@ -159,7 +160,7 @@ private fun LinuxTopBar(state: WindowState, onExit: () -> Unit, windowTitle: Str
 }
 
 @Composable
-private fun WindowsTopBar(state: WindowState, onExit: () -> Unit, windowTitle: String = "") {
+private fun WindowsTopBar(state: WindowState, onExit: () -> Unit, windowTitle: String = "", canClose: Boolean) {
     Box(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.align(Alignment.CenterEnd),
@@ -172,7 +173,7 @@ private fun WindowsTopBar(state: WindowState, onExit: () -> Unit, windowTitle: S
                 .width(60.dp)
                 .hoverable(hoverInteraction)
 
-            CloseButton(onExit, modifier, isHovering)
+            CloseButton(onExit, modifier, isHovering, canClose)
 
             MinimizeButton(
                 onMinimize = { state.isMinimized = !state.isMinimized },
@@ -197,7 +198,7 @@ private fun WindowsTopBar(state: WindowState, onExit: () -> Unit, windowTitle: S
 }
 
 @Composable
-private fun MacOsTopBar(state: WindowState, onExit: () -> Unit, windowTitle: String = "") {
+private fun MacOsTopBar(state: WindowState, onExit: () -> Unit, windowTitle: String = "", canClose: Boolean) {
     Box(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.align(Alignment.CenterStart),
@@ -210,7 +211,7 @@ private fun MacOsTopBar(state: WindowState, onExit: () -> Unit, windowTitle: Str
                 .width(60.dp)
                 .hoverable(hoverInteraction)
 
-            CloseButton(onExit, modifier, isHovering)
+            CloseButton(onExit, modifier, isHovering, canClose)
 
             MinimizeButton(
                 onMinimize = { state.isMinimized = !state.isMinimized },
@@ -238,17 +239,19 @@ private fun MacOsTopBar(state: WindowState, onExit: () -> Unit, windowTitle: Str
 private fun RowScope.CloseButton(
     onExit: () -> Unit,
     modifier: Modifier,
-    isHovering: Boolean
+    isHovering: Boolean,
+    canClose: Boolean,
 ) {
     NavigationBarItem(
         selected = false,
         onClick = onExit,
+        enabled = canClose,
         modifier = modifier,
         icon = {
             Icon(
                 Icons.Default.Close,
                 null,
-                tint = animateColorAsState(if (isHovering) Color.Red else LocalContentColor.current).value
+                tint = animateColorAsState(if (isHovering && canClose) Color.Red else LocalContentColor.current).value
             )
         },
         alwaysShowLabel = false,
@@ -264,7 +267,7 @@ private fun RowScope.CloseButton(
 private fun RowScope.MinimizeButton(
     onMinimize: () -> Unit,
     modifier: Modifier,
-    isHovering: Boolean
+    isHovering: Boolean,
 ) {
     NavigationBarItem(
         selected = false,
@@ -291,7 +294,7 @@ private fun RowScope.MaximizeButton(
     onMaximize: () -> Unit,
     icon: ImageVector,
     modifier: Modifier,
-    isHovering: Boolean
+    isHovering: Boolean,
 ) {
     NavigationBarItem(
         selected = false,

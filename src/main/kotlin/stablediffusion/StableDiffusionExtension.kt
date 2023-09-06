@@ -2,7 +2,6 @@
 
 package stablediffusion
 
-import discordbot.Emerald
 import com.kotlindiscord.kord.extensions.commands.Arguments
 import com.kotlindiscord.kord.extensions.commands.application.slash.converters.ChoiceEnum
 import com.kotlindiscord.kord.extensions.commands.application.slash.converters.impl.defaultingEnumChoice
@@ -12,12 +11,12 @@ import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.extensions.publicSlashCommand
 import com.kotlindiscord.kord.extensions.types.editingPaginator
 import com.kotlindiscord.kord.extensions.types.respond
-import dev.kord.core.behavior.interaction.followup.edit
 import dev.kord.rest.builder.message.create.embed
-import dev.kord.rest.builder.message.modify.embed
+import discordbot.Emerald
+import discordbot.Red
+import discordbot.respondWithError
 import io.ktor.client.request.forms.*
 import kotlinx.datetime.Clock
-import discordbot.respondWithError
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -45,8 +44,7 @@ class StableDiffusionExtension(
             description = "Get an ai generated image"
 
             action {
-                respond { content = "Please wait while I generate an image..." }
-                    .edit {
+                respond {
                         stableDiffusionNetwork.stableDiffusion(
                             prompt = arguments.prompt,
                             modelName = arguments.model,
@@ -94,7 +92,14 @@ class StableDiffusionExtension(
                                     addFile("output.png", ChannelProvider { it })
                                 }
                             }
-                            .respondWithError()
+                            .onFailure {
+                                content = "Error!"
+                                embed {
+                                    title = "Something went wrong"
+                                    description = it.stackTraceToString()
+                                    color = Red
+                                }
+                            }
                     }
             }
         }

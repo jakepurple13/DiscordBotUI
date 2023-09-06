@@ -14,11 +14,16 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.configureSwingGlobalsForCompose
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.window.application
+import androidx.compose.ui.window.awaitApplication
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 @Composable
 @Preview
@@ -79,29 +84,41 @@ fun TokenSetup(vm: DiscordBotViewModel) {
     }
 }
 
-fun main() = application {
-    val viewModel = remember { DiscordBotViewModel() }
-    var showSettings by remember { mutableStateOf(false) }
-    WindowWithBar(
-        onCloseRequest = ::exitApplication
-    ) {
-        App(
-            viewModel,
-            onShowSettings = { showSettings = true }
-        )
+@OptIn(ExperimentalComposeUiApi::class)
+fun main() = runBlocking {
+    val viewModel = DiscordBotViewModel()
+    if (System.getProperty("compose.application.configure.swing.globals") == "true") {
+        configureSwingGlobalsForCompose()
     }
 
-    if (showSettings) {
-        SettingsScreen(
-            onClose = { showSettings = false }
-        )
-    }
+    awaitApplication {
+        var showSettings by remember { mutableStateOf(false) }
 
-    /*if (viewModel.bot != null) {
         WindowWithBar(
-            onCloseRequest = {}
+            onCloseRequest = ::exitApplication,
+            canClose = viewModel.bot == null
         ) {
-            ChatWindow(viewModel)
+            App(
+                viewModel,
+                onShowSettings = { showSettings = true }
+            )
         }
-    }*/
+
+        if (showSettings) {
+            SettingsScreen(
+                onClose = { showSettings = false }
+            )
+        }
+    }
+
+    Runtime.getRuntime().addShutdownHook(
+        Thread {
+            runBlocking {
+                viewModel.bot?.stop()
+                println("Shutting down")
+            }
+        }
+    )
+
+    withContext(Dispatchers.IO) { Thread.currentThread().join() }
 }
