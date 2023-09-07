@@ -12,6 +12,7 @@ import com.kotlindiscord.kord.extensions.extensions.publicSlashCommand
 import com.kotlindiscord.kord.extensions.types.editingPaginator
 import com.kotlindiscord.kord.extensions.types.respond
 import com.kotlindiscord.kord.extensions.utils.download
+import dev.kord.rest.builder.message.create.actionRow
 import dev.kord.rest.builder.message.create.embed
 import discordbot.Emerald
 import discordbot.Red
@@ -37,6 +38,7 @@ class StableDiffusionExtension(
         stableDiffusion()
         sdProgress()
         sdHelp()
+        sdLinks()
     }
 
     private suspend fun stableDiffusion() {
@@ -125,6 +127,23 @@ class StableDiffusionExtension(
                             }
                         }
                         .respondWithError()
+                }
+            }
+        }
+    }
+
+    private suspend fun sdLinks() {
+        ephemeralSlashCommand {
+            name = "sdlinks"
+            description = "Display some links that might be very useful related to Stable Diffusion"
+            action {
+                respond {
+                    content = "Here are your links!"
+                    actionRow {
+                        linkButton("https://huggingface.co") { label = "Stable Diffusion Models" }
+                        linkButton("https://civitai.com/") { label = "Models and Loras" }
+                        linkButton("https://huchenlei.github.io/sd-webui-openpose-editor/") { label = "Poses" }
+                    }
                 }
             }
         }

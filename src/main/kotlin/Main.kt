@@ -240,6 +240,7 @@ fun main() {
                             actionRow {
                                 linkButton("https://huggingface.co") { label = "Stable Diffusion Models" }
                                 linkButton("https://civitai.com/") { label = "Models and Loras" }
+                                linkButton("https://huchenlei.github.io/sd-webui-openpose-editor/") { label = "Poses" }
                             }
                         }
                 },
