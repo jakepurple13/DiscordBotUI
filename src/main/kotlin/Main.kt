@@ -68,6 +68,7 @@ fun TokenSetup(vm: DiscordBotViewModel) {
                     value = vm.tokenForBot,
                     onValueChange = { vm.tokenForBot = it },
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    label = { Text("Bot Token Key") },
                     trailingIcon = {
                         IconButton(
                             onClick = { showPassword = !showPassword }

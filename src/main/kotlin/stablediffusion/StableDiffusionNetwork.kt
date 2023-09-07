@@ -86,8 +86,8 @@ class StableDiffusionNetwork(
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
             setBody(
-                pose
-                    ?.let {
+                when {
+                    pose != null -> {
                         StableDiffusionBodyControlNet(
                             prompt = prompt,
                             negativePrompt = negativePrompt,
@@ -103,25 +103,29 @@ class StableDiffusionNetwork(
                             },
                             width = width,
                             height = height,
-                            alwaysOnScripts = createControlNets(Base64.getEncoder().encodeToString(it))
+                            alwaysOnScripts = createControlNets(Base64.getEncoder().encodeToString(pose))
                         )
                     }
-                    ?: StableDiffusionBody(
-                        prompt = prompt,
-                        negativePrompt = negativePrompt,
-                        cfgScale = cfgScale,
-                        steps = steps,
-                        samplerIndex = sampler ?: "Euler a",
-                        seed = seed ?: -1,
-                        overrideOptions = modelName?.let {
-                            OverriddenOptions(
-                                sdModelCheckpoint = it,
-                                clipSkip = clipSkip
-                            )
-                        },
-                        width = width,
-                        height = height
-                    )
+
+                    else -> {
+                        StableDiffusionBody(
+                            prompt = prompt,
+                            negativePrompt = negativePrompt,
+                            cfgScale = cfgScale,
+                            steps = steps,
+                            samplerIndex = sampler ?: "Euler a",
+                            seed = seed ?: -1,
+                            overrideOptions = modelName?.let {
+                                OverriddenOptions(
+                                    sdModelCheckpoint = it,
+                                    clipSkip = clipSkip
+                                )
+                            },
+                            width = width,
+                            height = height
+                        )
+                    }
+                }
             )
             timeout {
                 requestTimeoutMillis = Long.MAX_VALUE
