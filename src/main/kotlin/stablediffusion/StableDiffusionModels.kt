@@ -260,7 +260,7 @@ internal class ControlNetUnits(
     @SerialName("input_image")
     val inputImage: String,
     val model: String,
-    val module: String,
+    //val module: String,
     val enabled: Boolean = true,
 )
 
@@ -274,7 +274,7 @@ internal fun createControlNets(
             ControlNetUnits(
                 inputImage = inputImage,
                 model = model,
-                module = module
+                //module = module
             )
         )
     )
