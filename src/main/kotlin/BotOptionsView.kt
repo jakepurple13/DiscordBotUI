@@ -34,10 +34,9 @@ fun BotOptionsViewController(
         transparent = true,
         focusable = false,
         resizable = false,
-        alwaysOnTop = true,
     ) {
         CustomMaterialTheme {
-            Surface(
+            Surface( 
                 shape = when (hostOs) {
                     OS.Linux -> RoundedCornerShape(8.dp)
                     OS.Windows -> RectangleShape

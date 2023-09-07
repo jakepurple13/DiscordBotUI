@@ -223,3 +223,59 @@ data class ExtraGenerationParams(
     @SerialName("Style Selector Style")
     val styleSelectorStyle: String,
 )
+
+@Serializable
+internal class StableDiffusionBodyControlNet(
+    val seed: Long,
+    val prompt: String,
+    val cfgScale: Double,
+    val steps: Int,
+    @SerialName("sampler_index")
+    val samplerIndex: String,
+    @SerialName("negative_prompt")
+    val negativePrompt: String = "",
+    @SerialName("batch_size")
+    val batchSize: Long = 1,
+    @SerialName("override_settings")
+    val overrideOptions: OverriddenOptions?,
+    val width: Long,
+    val height: Long,
+    @SerialName("alwayson_scripts")
+    val alwaysOnScripts: ControlNetArgs?,
+)
+
+@Serializable
+internal class ControlArgs(
+    val args: List<ControlNetUnits>,
+)
+
+@Serializable
+internal class ControlNetArgs(
+    @SerialName("controlnet")
+    val controlNetUnits: ControlArgs,
+)
+
+@Serializable
+internal class ControlNetUnits(
+    @SerialName("input_image")
+    val inputImage: String,
+    val model: String,
+    val module: String,
+    val enabled: Boolean = true,
+)
+
+internal fun createControlNets(
+    inputImage: String,
+    model: String = "control_v11p_sd15_openpose [cab727d4]",
+    module: String = "openpose",
+) = ControlNetArgs(
+    controlNetUnits = ControlArgs(
+        args = listOf(
+            ControlNetUnits(
+                inputImage = inputImage,
+                model = model,
+                module = module
+            )
+        )
+    )
+)

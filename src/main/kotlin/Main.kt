@@ -127,6 +127,7 @@ fun DiscordBotUI(
 
         WindowWithBar(
             onCloseRequest = ::exitApplication,
+            windowTitle = "DiscordBot UI",
             canClose = viewModel.bot == null,
             state = state,
             frameWindowScope = {
@@ -184,46 +185,48 @@ fun DiscordBotUI(
 }
 
 fun main() {
-    DiscordBotUI(
-        botCreation = { token ->
-            ExtensibleBot(token!!) {
-                chatCommands {
-                    enabled = true
-                }
+    when (running) {
+        RunType.DiscordBot -> {
+            DiscordBotUI(
+                botCreation = { token ->
+                    ExtensibleBot(token!!) {
+                        chatCommands {
+                            enabled = true
+                        }
 
-                extensions {
-                    val network = Network()
-                    add { NekoExtension(network) }
-                    add { MarvelSnapExtension(network) }
-                    StableDiffusion.addToKordExtensions()
-                    help {
-                        pingInReply = true
-                        color { Purple }
+                        extensions {
+                            val network = Network()
+                            add { NekoExtension(network) }
+                            add { MarvelSnapExtension(network) }
+                            StableDiffusion.addToKordExtensions()
+                            help {
+                                pingInReply = true
+                                color { Purple }
+                            }
+                        }
+
+                        hooks {
+                            kordShutdownHook = true
+                        }
+
+                        errorResponse { message, type ->
+                            type.error.printStackTrace()
+                            println(message)
+                        }
                     }
-                }
-
-                hooks {
-                    kordShutdownHook = true
-                }
-
-                errorResponse { message, type ->
-                    type.error.printStackTrace()
-                    println(message)
-                }
-            }
-        },
-        startUpMessages = { g ->
-            g.systemChannel
-                ?.createMessage {
-                    suppressNotifications = true
-                    content = "NekoBot is booting up...Please wait..."
-                }
-                ?.also { delay(500) }
-                ?.edit {
-                    content = "NekoBot is Online!"
-                    embed {
-                        title = "NekoBot is Online!"
-                        description = """
+                },
+                startUpMessages = { g ->
+                    g.systemChannel
+                        ?.createMessage {
+                            suppressNotifications = true
+                            content = "NekoBot is booting up...Please wait..."
+                        }
+                        ?.also { delay(500) }
+                        ?.edit {
+                            content = "NekoBot is Online!"
+                            embed {
+                                title = "NekoBot is Online!"
+                                description = """
                                 Meow is back online!
                                 
                                 To get more Stable Diffusion models or loras to suggest, press on the buttons below!
@@ -232,27 +235,40 @@ fun main() {
                                 To get a random cat image, type `/neko cat`
                                 To view Marvel Snap cards, type `/snapcards`
                             """.trimIndent()
-                        color = Emerald
+                                color = Emerald
+                            }
+                            actionRow {
+                                linkButton("https://huggingface.co") { label = "Stable Diffusion Models" }
+                                linkButton("https://civitai.com/") { label = "Models and Loras" }
+                            }
+                        }
+                },
+                shutdownMessages = { g ->
+                    g.systemChannel?.createMessage {
+                        suppressNotifications = true
+                        embed {
+                            title = "Shutting Down for maintenance and updates..."
+                            timestamp = Clock.System.now()
+                            description = "Please wait while I go through some maintenance."
+                            thumbnail {
+                                url = "https://media.tenor.com/YTPLqiB6gLsAAAAC/sowwy-sorry.gif"
+                            }
+                            color = Red
+                        }
                     }
-                    actionRow {
-                        linkButton("https://huggingface.co") { label = "Stable Diffusion Models" }
-                        linkButton("https://civitai.com/") { label = "Models and Loras" }
-                    }
-                }
-        },
-        shutdownMessages = { g ->
-            g.systemChannel?.createMessage {
-                suppressNotifications = true
-                embed {
-                    title = "Shutting Down for maintenance and updates..."
-                    timestamp = Clock.System.now()
-                    description = "Please wait while I go through some maintenance."
-                    thumbnail {
-                        url = "https://media.tenor.com/YTPLqiB6gLsAAAAC/sowwy-sorry.gif"
-                    }
-                    color = Red
-                }
-            }
-        },
-    )
+                },
+            )
+        }
+
+        RunType.Testing -> {
+
+        }
+    }
+}
+
+private val running = RunType.DiscordBot
+
+enum class RunType {
+    DiscordBot,
+    Testing
 }

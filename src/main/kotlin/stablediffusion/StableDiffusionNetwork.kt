@@ -8,6 +8,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import java.util.*
 
 private const val STABLE_DIFFUSION_URL = "http://127.0.0.1:7860/sdapi/v1"
 
@@ -79,27 +80,48 @@ class StableDiffusionNetwork(
         clipSkip: Long = 1,
         width: Long = 512,
         height: Long = 512,
+        pose: ByteArray? = null,
     ) = runCatching {
         client.post("$stableDiffusionUrl/txt2img") {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
             setBody(
-                StableDiffusionBody(
-                    prompt = prompt,
-                    negativePrompt = negativePrompt,
-                    cfgScale = cfgScale,
-                    steps = steps,
-                    samplerIndex = sampler ?: "Euler a",
-                    seed = seed ?: -1,
-                    overrideOptions = modelName?.let {
-                        OverriddenOptions(
-                            sdModelCheckpoint = it,
-                            clipSkip = clipSkip
+                pose
+                    ?.let {
+                        StableDiffusionBodyControlNet(
+                            prompt = prompt,
+                            negativePrompt = negativePrompt,
+                            cfgScale = cfgScale,
+                            steps = steps,
+                            samplerIndex = sampler ?: "Euler a",
+                            seed = seed ?: -1,
+                            overrideOptions = modelName?.let {
+                                OverriddenOptions(
+                                    sdModelCheckpoint = it,
+                                    clipSkip = clipSkip
+                                )
+                            },
+                            width = width,
+                            height = height,
+                            alwaysOnScripts = createControlNets(Base64.getEncoder().encodeToString(it))
                         )
-                    },
-                    width = width,
-                    height = height
-                )
+                    }
+                    ?: StableDiffusionBody(
+                        prompt = prompt,
+                        negativePrompt = negativePrompt,
+                        cfgScale = cfgScale,
+                        steps = steps,
+                        samplerIndex = sampler ?: "Euler a",
+                        seed = seed ?: -1,
+                        overrideOptions = modelName?.let {
+                            OverriddenOptions(
+                                sdModelCheckpoint = it,
+                                clipSkip = clipSkip
+                            )
+                        },
+                        width = width,
+                        height = height
+                    )
             )
             timeout {
                 requestTimeoutMillis = Long.MAX_VALUE

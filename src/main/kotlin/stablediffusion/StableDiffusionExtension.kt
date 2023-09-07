@@ -11,6 +11,7 @@ import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.extensions.publicSlashCommand
 import com.kotlindiscord.kord.extensions.types.editingPaginator
 import com.kotlindiscord.kord.extensions.types.respond
+import com.kotlindiscord.kord.extensions.utils.download
 import dev.kord.rest.builder.message.create.embed
 import discordbot.Emerald
 import discordbot.Red
@@ -56,7 +57,8 @@ class StableDiffusionExtension(
                             steps = arguments.steps,
                             clipSkip = arguments.clipSkip,
                             width = arguments.imageSize.width,
-                            height = arguments.imageSize.height
+                            height = arguments.imageSize.height,
+                            pose = arguments.pose?.download()
                         )
                             .onSuccess { model ->
                                 val info = model.info
@@ -222,6 +224,11 @@ class StableDiffusionExtension(
             description = "The resolution! If using an XL model, it's recommended to use 1024x1024"
             typeName = "Image Size"
             defaultValue = StableDiffusionSize.FiveTwelveByFiveTwelve
+        }
+
+        val pose by optionalAttachment {
+            name = "pose"
+            description = "Add if you want to use a pose using ControlNet and OpenPose"
         }
     }
 }
