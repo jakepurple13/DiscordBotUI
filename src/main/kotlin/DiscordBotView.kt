@@ -34,7 +34,7 @@ fun DiscordBotView(
                 title = { Text("Events") },
                 navigationIcon = {
                     IconButton(
-                        onClick = { viewModel.showBotScreen = false },
+                        onClick = { viewModel.botState = BotState.TokenSetup },
                         enabled = viewModel.bot == null
                     ) { Icon(Icons.Default.ArrowBack, null) }
                 },
@@ -114,12 +114,13 @@ fun DiscordBotView(
         Box(
             modifier = Modifier.padding(padding)
         ) {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                state = listState,
-            ) {
-                items(viewModel.eventList) {
-                    SelectionContainer {
+            SelectionContainer {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    state = listState,
+                ) {
+                    items(viewModel.eventList) {
+
                         when (it) {
                             is EventType.KordEvent -> {
                                 var showMore by remember { mutableStateOf(false) }

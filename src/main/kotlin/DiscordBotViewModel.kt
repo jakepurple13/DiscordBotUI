@@ -18,7 +18,7 @@ class DiscordBotViewModel(
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val botScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    var showBotScreen by mutableStateOf(false)
+    var botState by mutableStateOf<BotState>(BotState.TokenSetup)
 
     var bot: ExtensibleBot? by mutableStateOf(null)
         private set
@@ -64,21 +64,27 @@ class DiscordBotViewModel(
             .launchIn(viewModelScope)
     }
 
-    suspend fun startBot() {
-        runCatching { bot = botCreation(botToken.firstOrNull()) }
-            .onSuccess {
-                if (DataStore.sendStartup.flow.firstOrNull() == true) {
-                    bot
-                        ?.kordRef
-                        ?.guilds
-                        ?.onEach(startUpMessages)
-                        ?.launchIn(botScope)
-                }
+    fun startBot() {
+        viewModelScope.launch {
+            botState = BotState.Loading
+            runCatching { bot = botCreation(botToken.firstOrNull()) }
+                .onSuccess {
+                    if (DataStore.sendStartup.flow.firstOrNull() == true) {
+                        bot
+                            ?.kordRef
+                            ?.guilds
+                            ?.onEach(startUpMessages)
+                            ?.launchIn(botScope)
+                    }
 
-                showBotScreen = true
-                bot?.startAsync()
-            }
-            .onFailure { it.printStackTrace() }
+                    botState = BotState.BotRunning
+                    bot?.startAsync()
+                }
+                .onFailure {
+                    it.printStackTrace()
+                    botState = BotState.Error(it)
+                }
+        }
     }
 
     suspend fun stopBot() {
@@ -125,3 +131,10 @@ sealed class EventType {
 }
 
 val simpleDateTimeFormatter = SimpleDateFormat("MM/dd/yy HH:mm", Locale.getDefault())
+
+sealed class BotState {
+    data object Loading : BotState()
+    data object BotRunning : BotState()
+    data class Error(val error: Throwable) : BotState()
+    data object TokenSetup : BotState()
+}

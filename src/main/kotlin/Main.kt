@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Save
@@ -29,7 +31,6 @@ import dev.kord.rest.builder.message.modify.actionRow
 import dev.kord.rest.builder.message.modify.embed
 import discordbot.*
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import stablediffusion.StableDiffusion
@@ -40,18 +41,47 @@ fun App(
     vm: DiscordBotViewModel,
     onShowSettings: () -> Unit,
 ) {
-    Crossfade(vm.showBotScreen) { target ->
-        if (target) {
-            DiscordBotView(vm, onShowSettings)
-        } else {
-            TokenSetup(vm)
+    Crossfade(vm.botState) { target ->
+        when (target) {
+            BotState.BotRunning -> DiscordBotView(vm, onShowSettings)
+            is BotState.Error -> ErrorState(vm, target.error)
+            BotState.Loading -> {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            BotState.TokenSetup -> TokenSetup(vm)
+        }
+    }
+}
+
+@Composable
+fun ErrorState(vm: DiscordBotViewModel, throwable: Throwable) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.verticalScroll(rememberScrollState())
+        ) {
+            Text("Something went wrong")
+            Button(
+                onClick = { vm.botState = BotState.TokenSetup },
+            ) {
+                Text("Return to Token Setup")
+            }
+            Text(throwable.stackTraceToString())
         }
     }
 }
 
 @Composable
 fun TokenSetup(vm: DiscordBotViewModel) {
-    val scope = rememberCoroutineScope()
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
@@ -85,14 +115,14 @@ fun TokenSetup(vm: DiscordBotViewModel) {
                 ) { Icon(Icons.Default.Save, null) }
             }
             Button(
-                onClick = { scope.launch { vm.startBot() } },
-                enabled = vm.canStartBot
+                onClick = { vm.startBot() },
+                enabled = vm.canStartBot && vm.botState is BotState.TokenSetup
             ) {
                 Text("Start Bot")
             }
             Button(
-                onClick = { vm.showBotScreen = true },
-                enabled = vm.canStartBot
+                onClick = { vm.botState = BotState.BotRunning },
+                enabled = vm.canStartBot && vm.botState is BotState.TokenSetup
             ) {
                 Text("Enter Without Starting")
             }
