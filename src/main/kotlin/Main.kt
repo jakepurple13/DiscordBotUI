@@ -110,8 +110,36 @@ fun TokenSetup(vm: DiscordBotViewModel) {
                         }
                     }
                 )
+
+                var showSaveTokenDialog by remember { mutableStateOf(false) }
+                if (showSaveTokenDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showSaveTokenDialog = false },
+                        title = { Text("Save Token?") },
+                        text = { Text("You already have a saved token. Are you sure you want to replace it?") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    showSaveTokenDialog = false
+                                    vm.setToken()
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) { Text("Stop") }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = { showSaveTokenDialog = false },
+                            ) { Text("Cancel") }
+                        }
+                    )
+                }
                 IconButton(
-                    onClick = { vm.setToken() }
+                    onClick = {
+                        if (vm.canStartBot) showSaveTokenDialog = true
+                        else vm.setToken()
+                    }
                 ) { Icon(Icons.Default.Save, null) }
             }
             Button(
