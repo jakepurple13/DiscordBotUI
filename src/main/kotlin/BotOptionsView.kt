@@ -102,7 +102,7 @@ private fun BotOptionsView() {
 @Composable
 private fun SwitchPreference(
     title: String,
-    dataStoreType: DataStore.DataStoreType<Boolean>,
+    dataStoreType: DataStore.DataStoreTypeNonNull<Boolean>,
     scope: CoroutineScope = rememberCoroutineScope(),
     modifier: Modifier = Modifier,
 ) {

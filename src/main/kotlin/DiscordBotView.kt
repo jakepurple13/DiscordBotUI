@@ -27,7 +27,7 @@ fun DiscordBotView(
 ) {
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-    val scrollToBottom by DataStore.scrollToBottom.collectAsStateWithLifecycle(true)
+    val scrollToBottom by DataStore.scrollToBottom.flow.collectAsStateWithLifecycle(true)
     Scaffold(
         topBar = {
             TopAppBar(

@@ -39,6 +39,7 @@ class DiscordBotViewModel(
 
     init {
         botToken
+            .flow
             .onEach { canStartBot = !it.isNullOrEmpty() }
             .launchIn(viewModelScope)
 
@@ -67,7 +68,7 @@ class DiscordBotViewModel(
     fun startBot() {
         viewModelScope.launch {
             botState = BotState.Loading
-            runCatching { bot = botCreation(botToken.firstOrNull()) }
+            runCatching { bot = botCreation(botToken.flow.firstOrNull()) }
                 .onSuccess {
                     if (DataStore.sendStartup.flow.firstOrNull() == true) {
                         bot
@@ -101,7 +102,7 @@ class DiscordBotViewModel(
     }
 
     fun setToken() {
-        viewModelScope.launch { DataStore.updateToken(tokenForBot) }
+        viewModelScope.launch { botToken.update(tokenForBot) }
         tokenForBot = ""
     }
 
@@ -120,7 +121,7 @@ class DiscordBotViewModel(
 
     fun showSavedToken() {
         viewModelScope.launch {
-            tokenForBot = botToken.firstOrNull().orEmpty()
+            tokenForBot = botToken.flow.firstOrNull().orEmpty()
         }
     }
 }

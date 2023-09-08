@@ -13,32 +13,30 @@ internal val SEND_SHUTDOWN = booleanPreferencesKey("SEND_SHUTDOWN")
 object DataStore {
     private val dataStore = PreferenceDataStoreFactory.createWithPath { "androidx.preferences_pb".toPath() }
 
-    val botToken: Flow<String?> = dataStore.data.map { it[BOT_TOKEN] }
+    val botToken: DataStoreType<String> = DataStoreType(BOT_TOKEN)
 
-    suspend fun updateToken(token: String) {
-        updatePref(BOT_TOKEN, token)
-    }
+    val scrollToBottom = DataStoreTypeNonNull(SCROLL_TO_BOTTOM)
 
-    val scrollToBottom: Flow<Boolean> = dataStore.data.mapNotNull { it[SCROLL_TO_BOTTOM] }
+    val sendStartup = DataStoreTypeNonNull(SEND_START_UP)
+    val sendShutdown = DataStoreTypeNonNull(SEND_SHUTDOWN)
 
-    suspend fun changeScrollToBottom(change: Boolean) {
-        updatePref(SCROLL_TO_BOTTOM, change)
-    }
-
-    val sendStartup = DataStoreType(SEND_START_UP)
-    val sendShutdown = DataStoreType(SEND_SHUTDOWN)
-
-    private suspend fun <T> updatePref(key: Preferences.Key<T>, value: T) = dataStore.edit { it[key] = value }
-
-    class DataStoreType<T>(
-        private val key: Preferences.Key<T>,
+    open class DataStoreType<T>(
+        protected val key: Preferences.Key<T>,
     ) {
-        val flow: Flow<T> = dataStore.data
-            .mapNotNull { it[key] }
+        open val flow: Flow<T?> = dataStore.data
+            .map { it[key] }
             .distinctUntilChanged()
 
-        suspend fun update(value: T) {
+        open suspend fun update(value: T) {
             dataStore.edit { it[key] = value }
         }
+    }
+
+    open class DataStoreTypeNonNull<T>(
+        key: Preferences.Key<T>,
+    ) : DataStoreType<T>(key) {
+        override val flow: Flow<T> = dataStore.data
+            .mapNotNull { it[key] }
+            .distinctUntilChanged()
     }
 }

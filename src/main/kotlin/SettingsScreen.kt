@@ -30,10 +30,10 @@ fun SettingsScreen(
                     .padding(it)
                     .verticalScroll(rememberScrollState())
             ) {
-                val scrollToBottom by DataStore.scrollToBottom.collectAsStateWithLifecycle(true)
+                val scrollToBottom by DataStore.scrollToBottom.flow.collectAsStateWithLifecycle(true)
 
                 OutlinedCard(
-                    onClick = { scope.launch { DataStore.changeScrollToBottom(!scrollToBottom) } }
+                    onClick = { scope.launch { DataStore.scrollToBottom.update(!scrollToBottom) } }
                 ) {
                     ListItem(
                         headlineContent = { Text("Scroll to Bottom") },
