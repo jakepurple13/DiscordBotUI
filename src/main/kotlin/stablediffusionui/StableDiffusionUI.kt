@@ -59,8 +59,8 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                 floatingActionButton = {
                     AnimatedVisibility(
                         !viewModel.isLoading && viewModel.prompt.isNotEmpty(),
-                        enter = slideInHorizontally(),
-                        exit = slideOutHorizontally()
+                        enter = slideInHorizontally { it },
+                        exit = slideOutHorizontally { it }
                     ) {
                         ExtendedFloatingActionButton(
                             onClick = { viewModel.generateImage() },
@@ -151,6 +151,7 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                         value = viewModel.prompt,
                         onValueChange = { viewModel.prompt = it },
                         label = { Text("Prompt") },
+                        isError = viewModel.prompt.isEmpty(),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -358,24 +359,27 @@ internal class StableDiffusionViewModel(
     fun generateImage() {
         viewModelScope.launch {
             isLoading = true
-            stableDiffusionNetwork.stableDiffusion(
-                prompt = prompt,
-                modelName = modelName?.modelName,
-                cfgScale = cfgScale,
-                steps = steps,
-                negativePrompt = negativePrompt,
-                sampler = sampler?.name,
-                seed = seed.toLongOrNull(),
-                clipSkip = clipSkip,
-                width = width,
-                height = height,
-                pose = null
-            ).onSuccess {
-                sdInfo = SDImageInfo(
-                    stableDiffusionInfo = it,
-                    dateTimeFormatter = dateTimeFormatter,
-                    dateTimeParser = dateTimeParser
-                )
+            runCatching {
+                check(prompt.isNotEmpty())
+                stableDiffusionNetwork.stableDiffusion(
+                    prompt = prompt,
+                    modelName = modelName?.modelName,
+                    cfgScale = cfgScale,
+                    steps = steps,
+                    negativePrompt = negativePrompt,
+                    sampler = sampler?.name,
+                    seed = seed.toLongOrNull(),
+                    clipSkip = clipSkip,
+                    width = width,
+                    height = height,
+                    pose = null
+                ).onSuccess {
+                    sdInfo = SDImageInfo(
+                        stableDiffusionInfo = it,
+                        dateTimeFormatter = dateTimeFormatter,
+                        dateTimeParser = dateTimeParser
+                    )
+                }
             }
             isLoading = false
         }
