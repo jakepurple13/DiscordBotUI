@@ -26,21 +26,17 @@ private val running = RunType.DiscordBot
 fun main() {
     when (running) {
         RunType.DiscordBot -> DiscordBot()
-        RunType.Testing -> {
-
-        }
+        RunType.Testing -> {}
     }
 }
 
 private fun DiscordBot() {
-    var showStableDiffusionWindow by mutableStateOf(false)
     val stableDiffusionNetwork = StableDiffusionNetwork()
+    var showStableDiffusionWindow by mutableStateOf(false)
     DiscordBotUI(
         botCreation = { token ->
             ExtensibleBot(token!!) {
-                chatCommands {
-                    enabled = true
-                }
+                chatCommands { enabled = true }
 
                 extensions {
                     val network = Network()
@@ -53,9 +49,7 @@ private fun DiscordBot() {
                     }
                 }
 
-                hooks {
-                    kordShutdownHook = true
-                }
+                hooks { kordShutdownHook = true }
 
                 errorResponse { message, type ->
                     type.error.printStackTrace()

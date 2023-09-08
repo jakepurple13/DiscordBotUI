@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -92,7 +93,10 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                                 .verticalScroll(rememberScrollState())
                                 .fillMaxSize()
                         ) {
-                            FlowRow {
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
                                 info.images.forEach { LoadedImage(it) }
                             }
                             SelectionContainer {
@@ -221,7 +225,12 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                             }
                         }
                         ListItem(
-                            headlineContent = { Text(viewModel.modelName?.modelName.orEmpty()) }
+                            headlineContent = { Text(viewModel.modelName?.modelName.orEmpty()) },
+                            trailingContent = {
+                                IconButton(
+                                    onClick = { viewModel.loadModels() },
+                                ) { Icon(Icons.Default.Refresh, null) }
+                            }
                         )
                     }
 
@@ -245,7 +254,12 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                             }
                         }
                         ListItem(
-                            headlineContent = { Text(viewModel.sampler?.name.orEmpty()) }
+                            headlineContent = { Text(viewModel.sampler?.name.orEmpty()) },
+                            trailingContent = {
+                                IconButton(
+                                    onClick = { viewModel.loadSamplers() },
+                                ) { Icon(Icons.Default.Refresh, null) }
+                            }
                         )
                     }
                 }
@@ -315,6 +329,7 @@ internal class StableDiffusionViewModel(
     fun loadModels() {
         viewModelScope.launch {
             stableDiffusionNetwork.stableDiffusionModels().onSuccess {
+                modelList.clear()
                 modelName = it.firstOrNull()
                 modelList.addAll(it)
             }
@@ -324,6 +339,7 @@ internal class StableDiffusionViewModel(
     fun loadSamplers() {
         viewModelScope.launch {
             stableDiffusionNetwork.stableDiffusionSamplers().onSuccess {
+                samplerList.clear()
                 sampler = it.firstOrNull()
                 samplerList.addAll(it)
             }
@@ -332,7 +348,10 @@ internal class StableDiffusionViewModel(
 
     fun loadLoras() {
         viewModelScope.launch {
-            stableDiffusionNetwork.stableDiffusionLoras().onSuccess { loraList.addAll(it) }
+            stableDiffusionNetwork.stableDiffusionLoras().onSuccess {
+                loraList.clear()
+                loraList.addAll(it)
+            }
         }
     }
 
