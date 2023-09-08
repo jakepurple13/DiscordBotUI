@@ -142,5 +142,4 @@ class StableDiffusionNetwork(
                 )
             }
     }
-        .onFailure { it.printStackTrace() }
 }
