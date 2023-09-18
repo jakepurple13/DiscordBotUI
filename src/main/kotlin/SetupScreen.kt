@@ -29,10 +29,16 @@ import kotlinx.coroutines.runBlocking
 fun App(
     vm: DiscordBotViewModel,
     onShowSettings: () -> Unit,
+    onShowSearch: () -> Unit,
 ) {
     Crossfade(vm.botState) { target ->
         when (target) {
-            BotState.BotRunning -> DiscordBotView(vm, onShowSettings)
+            BotState.BotRunning -> DiscordBotView(
+                viewModel = vm,
+                onShowSettings = onShowSettings,
+                onShowSearch = onShowSearch
+            )
+
             is BotState.Error -> ErrorState(vm, target.error)
             BotState.Loading -> {
                 Box(
@@ -171,6 +177,7 @@ fun DiscordBotUI(
 
     application {
         var showSettings by remember { mutableStateOf(false) }
+        var showSearch by remember { mutableStateOf(false) }
         var showBotOptions by remember { mutableStateOf(false) }
         val state = rememberWindowState()
 
@@ -200,7 +207,8 @@ fun DiscordBotUI(
         ) {
             App(
                 vm = viewModel,
-                onShowSettings = { showSettings = true }
+                onShowSettings = { showSettings = true },
+                onShowSearch = { showSearch = true }
             )
         }
 
@@ -227,6 +235,13 @@ fun DiscordBotUI(
         if (showSettings) {
             SettingsScreen(
                 onClose = { showSettings = false }
+            )
+        }
+
+        if (showSearch) {
+            SearchWindow(
+                viewModel = viewModel,
+                onClose = { showSearch = false }
             )
         }
 

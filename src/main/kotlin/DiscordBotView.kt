@@ -24,6 +24,7 @@ import moe.tlaster.precompose.flow.collectAsStateWithLifecycle
 fun DiscordBotView(
     viewModel: DiscordBotViewModel,
     onShowSettings: () -> Unit,
+    onShowSearch: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
@@ -40,6 +41,7 @@ fun DiscordBotView(
                 },
                 actions = {
                     IconButton(onClick = onShowSettings) { Icon(Icons.Default.Settings, null) }
+                    IconButton(onClick = onShowSearch) { Icon(Icons.Default.Search, null) }
                 }
             )
         },
@@ -49,7 +51,14 @@ fun DiscordBotView(
                     modifier = Modifier.fillMaxWidth()
                 ) { MessageRow(viewModel) }
                 BottomAppBar(
-                    actions = {},
+                    actions = {
+                        ChannelTextBox(
+                            selectedGuild = viewModel.selectedGuild,
+                            selectedChannel = viewModel.selectedChannel,
+                            sendMessage = viewModel::sendMessage,
+                            modifier = Modifier.padding(start = 2.dp)
+                        )
+                    },
                     floatingActionButton = {
                         var showStopDialog by remember { mutableStateOf(false) }
 
@@ -126,73 +135,19 @@ fun DiscordBotView(
                                 var showMore by remember { mutableStateOf(false) }
                                 when (val event = it.event) {
                                     is GuildChatInputCommandInteractionCreateEvent -> {
-                                        OutlinedCard(
-                                            onClick = { showMore = !showMore },
-                                            modifier = Modifier.animateContentSize()
-                                        ) {
-                                            ListItem(
-                                                overlineContent = {
-                                                    Column {
-                                                        Text("Username: " + event.interaction.user.username)
-                                                        Text("Global Name: " + event.interaction.user.globalName.orEmpty())
-                                                        Text("Effective Name: " + event.interaction.user.effectiveName)
-                                                    }
-                                                },
-                                                headlineContent = { Text("Command: " + event.interaction.invokedCommandName) },
-                                                supportingContent = {
-                                                    Text(
-                                                        event.interaction.data.data
-                                                            .options
-                                                            .value
-                                                            .orEmpty()
-                                                            .joinToString("\n\n") {
-                                                                "${it.name} = ${it.value.value?.value}"
-                                                            },
-                                                        maxLines = if (showMore) Int.MAX_VALUE else 3
-                                                    )
-                                                },
-                                                trailingContent = {
-                                                    Icon(
-                                                        if (showMore) Icons.Default.ArrowDropUp
-                                                        else Icons.Default.ArrowDropDown,
-                                                        null
-                                                    )
-                                                }
-                                            )
-                                        }
+                                        GuildChatInputCommandInteractionCreateEventItem(
+                                            event = event,
+                                            showMore = showMore,
+                                            onShowMoreChange = { showMore = it }
+                                        )
                                     }
 
                                     is MessageCreateEvent -> {
-                                        OutlinedCard(
-                                            onClick = { showMore = !showMore },
-                                            modifier = Modifier.animateContentSize()
-                                        ) {
-                                            ListItem(
-                                                overlineContent = {
-                                                    Column {
-                                                        Column {
-                                                            Text("Username: " + event.member?.username)
-                                                            Text("Global Name: " + event.member?.globalName.orEmpty())
-                                                            Text("Effective Name: " + event.member?.effectiveName)
-                                                            Text(simpleDateTimeFormatter.format(event.message.timestamp.toEpochMilliseconds()))
-                                                        }
-                                                    }
-                                                },
-                                                headlineContent = {
-                                                    Text(
-                                                        event.message.content,
-                                                        maxLines = if (showMore) Int.MAX_VALUE else 3
-                                                    )
-                                                },
-                                                trailingContent = {
-                                                    Icon(
-                                                        if (showMore) Icons.Default.ArrowDropUp
-                                                        else Icons.Default.ArrowDropDown,
-                                                        null
-                                                    )
-                                                }
-                                            )
-                                        }
+                                        MessageCreateEventItem(
+                                            event = event,
+                                            showMore = showMore,
+                                            onShowMoreChange = { showMore = it }
+                                        )
                                     }
 
                                     else -> {
@@ -245,5 +200,87 @@ fun DiscordBotView(
                     .fillMaxHeight()
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GuildChatInputCommandInteractionCreateEventItem(
+    event: GuildChatInputCommandInteractionCreateEvent,
+    showMore: Boolean,
+    onShowMoreChange: (Boolean) -> Unit,
+) {
+    OutlinedCard(
+        onClick = { onShowMoreChange(!showMore) },
+        modifier = Modifier.animateContentSize()
+    ) {
+        ListItem(
+            overlineContent = {
+                Column {
+                    Text("Username: " + event.interaction.user.username)
+                    Text("Global Name: " + event.interaction.user.globalName.orEmpty())
+                    Text("Effective Name: " + event.interaction.user.effectiveName)
+                }
+            },
+            headlineContent = { Text("Command: " + event.interaction.invokedCommandName) },
+            supportingContent = {
+                Text(
+                    event.interaction.data.data
+                        .options
+                        .value
+                        .orEmpty()
+                        .joinToString("\n\n") {
+                            "${it.name} = ${it.value.value?.value}"
+                        },
+                    maxLines = if (showMore) Int.MAX_VALUE else 3
+                )
+            },
+            trailingContent = {
+                Icon(
+                    if (showMore) Icons.Default.ArrowDropUp
+                    else Icons.Default.ArrowDropDown,
+                    null
+                )
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MessageCreateEventItem(
+    event: MessageCreateEvent,
+    showMore: Boolean,
+    onShowMoreChange: (Boolean) -> Unit,
+) {
+    OutlinedCard(
+        onClick = { onShowMoreChange(!showMore) },
+        modifier = Modifier.animateContentSize()
+    ) {
+        ListItem(
+            overlineContent = {
+                Column {
+                    Column {
+                        Text("Username: " + event.member?.username)
+                        Text("Global Name: " + event.member?.globalName.orEmpty())
+                        Text("Effective Name: " + event.member?.effectiveName)
+                        Text(simpleDateTimeFormatter.format(event.message.timestamp.toEpochMilliseconds()))
+                    }
+                }
+            },
+            headlineContent = {
+                Text(
+                    event.message.content,
+                    maxLines = if (showMore) Int.MAX_VALUE else 3
+                )
+            },
+            trailingContent = {
+                Icon(
+                    if (showMore) Icons.Default.ArrowDropUp
+                    else Icons.Default.ArrowDropDown,
+                    null
+                )
+            }
+        )
     }
 }
