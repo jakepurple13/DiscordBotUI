@@ -2,7 +2,11 @@
 
 package stablediffusionui
 
+import ExposedBoxOptions
+import LocalWindow
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.*
@@ -10,20 +14,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.toAwtImage
-import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.darkrockstudios.libraries.mpfilepicker.FilePicker
+import com.darkrockstudios.libraries.mpfilepicker.JvmFile
+import dropTarget
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModel
@@ -31,6 +40,7 @@ import moe.tlaster.precompose.viewmodel.viewModelScope
 import org.jetbrains.compose.splitpane.ExperimentalSplitPaneApi
 import org.jetbrains.compose.splitpane.HorizontalSplitPane
 import org.jetbrains.compose.splitpane.rememberSplitPaneState
+import rootDragDropModifier
 import stablediffusion.*
 import java.awt.Cursor
 import java.awt.Image
@@ -38,6 +48,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
+import java.io.File
 import java.io.IOException
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -71,7 +82,11 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                     }
                 }
             )
-        }
+        },
+        modifier = Modifier.rootDragDropModifier(
+            density = LocalDensity.current.density,
+            window = LocalWindow.current.window,
+        ),
     ) { padding ->
         HorizontalSplitPane(
             splitPaneState = splitterState,
@@ -162,6 +177,8 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Divider()
+
                     ListItem(
                         overlineContent = { Text("Steps: ${viewModel.steps}") },
                         headlineContent = {
@@ -173,6 +190,8 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                             )
                         }
                     )
+
+                    Divider()
 
                     ListItem(
                         overlineContent = { Text("Cfg Scale: ${viewModel.cfgScale}") },
@@ -186,6 +205,8 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                         }
                     )
 
+                    Divider()
+
                     ListItem(
                         overlineContent = { Text("Clip Skip: ${viewModel.clipSkip}") },
                         headlineContent = {
@@ -198,6 +219,8 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                         }
                     )
 
+                    Divider()
+
                     TextField(
                         value = viewModel.seed,
                         onValueChange = { viewModel.seed = it },
@@ -206,60 +229,111 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Divider()
+
                     var showModelSelector by remember { mutableStateOf(false) }
-                    OutlinedCard(
-                        onClick = { showModelSelector = true }
-                    ) {
-                        DropdownMenu(
-                            showModelSelector,
-                            onDismissRequest = { showModelSelector = false }
-                        ) {
-                            viewModel.modelList.forEach {
-                                DropdownMenuItem(
-                                    text = { Text(it.modelName) },
-                                    onClick = {
-                                        viewModel.modelName = it
-                                        showModelSelector = false
-                                    },
-                                    leadingIcon = { RadioButton(selected = it == viewModel.modelName, onClick = null) }
-                                )
-                            }
+                    ExposedBoxOptions(
+                        expanded = showModelSelector,
+                        onExpandedChange = { showModelSelector = it },
+                        currentValue = viewModel.modelName?.modelName.toString(),
+                        options = viewModel.modelList,
+                        optionToString = { it.modelName },
+                        onClick = { viewModel.modelName = it },
+                        label = "Model",
+                        leadingIcon = {
+                            IconButton(
+                                onClick = viewModel::loadModels,
+                            ) { Icon(Icons.Default.Refresh, null) }
                         }
-                        ListItem(
-                            headlineContent = { Text(viewModel.modelName?.modelName.orEmpty()) },
-                            trailingContent = {
-                                IconButton(
-                                    onClick = { viewModel.loadModels() },
-                                ) { Icon(Icons.Default.Refresh, null) }
-                            }
-                        )
-                    }
+                    )
+
+                    Divider()
 
                     var showSamplerSelector by remember { mutableStateOf(false) }
-                    OutlinedCard(
-                        onClick = { showSamplerSelector = true }
-                    ) {
-                        DropdownMenu(
-                            showSamplerSelector,
-                            onDismissRequest = { showSamplerSelector = false }
-                        ) {
-                            viewModel.samplerList.forEach {
-                                DropdownMenuItem(
-                                    text = { Text(it.name) },
-                                    onClick = {
-                                        viewModel.sampler = it
-                                        showSamplerSelector = false
-                                    },
-                                    leadingIcon = { RadioButton(selected = it == viewModel.sampler, onClick = null) }
-                                )
-                            }
+                    ExposedBoxOptions(
+                        expanded = showSamplerSelector,
+                        onExpandedChange = { showSamplerSelector = it },
+                        currentValue = viewModel.sampler?.name.toString(),
+                        options = viewModel.samplerList,
+                        optionToString = { it.name },
+                        onClick = { viewModel.sampler = it },
+                        label = "Sampler",
+                        leadingIcon = {
+                            IconButton(
+                                onClick = viewModel::loadSamplers,
+                            ) { Icon(Icons.Default.Refresh, null) }
                         }
+                    )
+
+                    Divider()
+
+                    var showFilePicker by remember { mutableStateOf(false) }
+
+                    val fileType = listOf("jpg", "png")
+                    FilePicker(showFilePicker, fileExtensions = fileType) { file ->
+                        showFilePicker = false
+                        // do something with the file
+                        (file?.platformFile as? JvmFile)
+                            ?.platformFile
+                            ?.readBytes()
+                            ?.let { viewModel.pose = it }
+                    }
+
+                    var isDragDrop by remember { mutableStateOf(false) }
+                    val dashedAlpha by animateFloatAsState(if (isDragDrop) 1f else 0f)
+                    val borderColor = MaterialTheme.colorScheme.outline
+                    Card(
+                        onClick = { showFilePicker = true },
+                        modifier = Modifier
+                            .dropTarget(
+                                onStarted = { _, _ ->
+                                    isDragDrop = true
+                                    true
+                                },
+                                onDropped = { uris, _ ->
+                                    if (uris.size != 1) return@dropTarget false
+                                    uris.firstOrNull()
+                                        ?.path
+                                        ?.let { File(it) }
+                                        ?.readBytes()
+                                        ?.let { viewModel.pose = it }
+                                    true
+                                },
+                                onEnded = { isDragDrop = false }
+                            )
+                            .drawBehind {
+                                if (isDragDrop) {
+                                    drawRoundRect(
+                                        color = borderColor,
+                                        style = Stroke(
+                                            width = 2f,
+                                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                                        ),
+                                        alpha = dashedAlpha,
+                                        cornerRadius = CornerRadius(12f)
+                                    )
+                                }
+                            }
+                            .animateContentSize()
+                    ) {
                         ListItem(
-                            headlineContent = { Text(viewModel.sampler?.name.orEmpty()) },
-                            trailingContent = {
+                            headlineContent = { Text("Pose") },
+                            leadingContent = {
                                 IconButton(
-                                    onClick = { viewModel.loadSamplers() },
-                                ) { Icon(Icons.Default.Refresh, null) }
+                                    onClick = { viewModel.pose = null }
+                                ) { Icon(Icons.Default.Close, null) }
+                            },
+                        )
+                        ListItem(
+                            headlineContent = {
+                                if (isDragDrop) {
+                                    Text("Drag and Drop a pose image")
+                                } else {
+                                    Text("Click to load a pose image")
+                                }
+                            },
+                            supportingContent = {
+                                viewModel.pose?.let { LoadedImage(org.jetbrains.skia.Image.makeFromEncoded(it)) }
                             }
                         )
                     }
@@ -372,7 +446,7 @@ internal class StableDiffusionViewModel(
                     clipSkip = clipSkip,
                     width = width,
                     height = height,
-                    pose = null
+                    pose = pose
                 ).onSuccess {
                     sdInfo = SDImageInfo(
                         stableDiffusionInfo = it,

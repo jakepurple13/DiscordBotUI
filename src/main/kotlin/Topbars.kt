@@ -11,9 +11,7 @@ import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +26,8 @@ import androidx.compose.ui.window.rememberWindowState
 import moe.tlaster.precompose.PreComposeWindow
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
+
+val LocalWindow: ProvidableCompositionLocal<FrameWindowScope> = staticCompositionLocalOf { error("None Yet") }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -50,70 +50,78 @@ internal fun WindowWithBar(
         visible = visible,
     ) {
         CustomMaterialTheme {
-            frameWindowScope()
-            val hasFocus = LocalWindowInfo.current.isWindowFocused
-            Surface(
-                shape = when (hostOs) {
-                    OS.Linux -> RoundedCornerShape(8.dp)
-                    OS.Windows -> RectangleShape
-                    OS.MacOS -> RoundedCornerShape(8.dp)
-                    else -> RoundedCornerShape(8.dp)
-                },
-                modifier = Modifier.animateContentSize(),
-                border = ButtonDefaults.outlinedButtonBorder,
-            ) {
-                Scaffold(
-                    topBar = {
-                        Column {
-                            WindowDraggableArea(
-                                modifier = Modifier.combinedClickable(
-                                    indication = null,
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    onClick = {},
-                                    onDoubleClick = {
-                                        state.placement =
-                                            if (state.placement != WindowPlacement.Maximized) {
-                                                WindowPlacement.Maximized
-                                            } else {
-                                                WindowPlacement.Floating
-                                            }
-                                    }
-                                )
-                            ) {
-                                Surface(
-                                    color = animateColorAsState(
-                                        if (hasFocus) MaterialTheme.colorScheme.surface
-                                        else MaterialTheme.colorScheme.surfaceVariant
-                                    ).value,
-                                    tonalElevation = 0.dp
+            CompositionLocalProvider(LocalWindow provides this) {
+                frameWindowScope()
+                val hasFocus = LocalWindowInfo.current.isWindowFocused
+                Surface(
+                    shape = when (hostOs) {
+                        OS.Linux -> RoundedCornerShape(8.dp)
+                        OS.Windows -> RectangleShape
+                        OS.MacOS -> RoundedCornerShape(8.dp)
+                        else -> RoundedCornerShape(8.dp)
+                    },
+                    modifier = Modifier.animateContentSize(),
+                    border = ButtonDefaults.outlinedButtonBorder,
+                ) {
+                    Scaffold(
+                        topBar = {
+                            Column {
+                                WindowDraggableArea(
+                                    modifier = Modifier.combinedClickable(
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        onClick = {},
+                                        onDoubleClick = {
+                                            state.placement =
+                                                if (state.placement != WindowPlacement.Maximized) {
+                                                    WindowPlacement.Maximized
+                                                } else {
+                                                    WindowPlacement.Floating
+                                                }
+                                        }
+                                    )
                                 ) {
-                                    Row(
-                                        Modifier.fillMaxWidth()
-                                            .padding(horizontal = 4.dp)
-                                            .padding(TopAppBarDefaults.windowInsets.asPaddingValues())
-                                            .height(56.dp)
+                                    Surface(
+                                        color = animateColorAsState(
+                                            if (hasFocus) MaterialTheme.colorScheme.surface
+                                            else MaterialTheme.colorScheme.surfaceVariant
+                                        ).value,
+                                        tonalElevation = 0.dp
                                     ) {
-                                        when (hostOs) {
-                                            OS.Linux -> LinuxTopBar(state, onCloseRequest, windowTitle, canClose)
-                                            OS.Windows -> WindowsTopBar(state, onCloseRequest, windowTitle, canClose)
-                                            OS.MacOS -> MacOsTopBar(state, onCloseRequest, windowTitle, canClose)
-                                            else -> {}
+                                        Row(
+                                            Modifier.fillMaxWidth()
+                                                .padding(horizontal = 4.dp)
+                                                .padding(TopAppBarDefaults.windowInsets.asPaddingValues())
+                                                .height(56.dp)
+                                        ) {
+                                            when (hostOs) {
+                                                OS.Linux -> LinuxTopBar(state, onCloseRequest, windowTitle, canClose)
+                                                OS.Windows -> WindowsTopBar(
+                                                    state,
+                                                    onCloseRequest,
+                                                    windowTitle,
+                                                    canClose
+                                                )
+
+                                                OS.MacOS -> MacOsTopBar(state, onCloseRequest, windowTitle, canClose)
+                                                else -> {}
+                                            }
                                         }
                                     }
                                 }
+                                Divider(color = MaterialTheme.colorScheme.onSurface)
                             }
-                            Divider(color = MaterialTheme.colorScheme.onSurface)
+                        },
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        bottomBar = bottomBar,
+                        snackbarHost = {
+                            SnackbarHost(
+                                hostState = snackbarHostState,
+                                snackbar = { Snackbar(snackbarData = it) }
+                            )
                         }
-                    },
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    bottomBar = bottomBar,
-                    snackbarHost = {
-                        SnackbarHost(
-                            hostState = snackbarHostState,
-                            snackbar = { Snackbar(snackbarData = it) }
-                        )
-                    }
-                ) { padding -> Surface(modifier = Modifier.padding(padding)) { content() } }
+                    ) { padding -> Surface(modifier = Modifier.padding(padding)) { content() } }
+                }
             }
         }
     }

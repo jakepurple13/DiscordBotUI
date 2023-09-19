@@ -78,7 +78,7 @@ fun RowScope.ChannelTextBox(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun <T> ExposedBoxOptions(
+fun <T> ExposedBoxOptions(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     currentValue: String,
@@ -86,6 +86,7 @@ private fun <T> ExposedBoxOptions(
     optionToString: (T) -> String,
     onClick: (T?) -> Unit,
     label: String,
+    leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -98,6 +99,7 @@ private fun <T> ExposedBoxOptions(
             value = currentValue,
             onValueChange = {},
             label = { Text(label) },
+            leadingIcon = leadingIcon,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
         )

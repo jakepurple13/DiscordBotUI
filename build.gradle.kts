@@ -49,6 +49,7 @@ dependencies {
     implementation("moe.tlaster:precompose:$precompose")
     implementation("moe.tlaster:precompose-viewmodel:$precompose")
     implementation("media.kamel:kamel-image:0.7.2")
+    implementation("com.darkrockstudios:mpfilepicker:2.1.0")
 
     //DiscordBot stuff
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
