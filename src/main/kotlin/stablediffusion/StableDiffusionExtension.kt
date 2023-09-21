@@ -167,10 +167,12 @@ class StableDiffusionExtension(
                         .orEmpty()
                     editingPaginator {
                         keepEmbed = true
-                        page {
-                            title = "Models"
-                            description = "Here you can see what the models are and get more information about them"
-                            models.forEach { field(it.title) }
+                        models.chunked(10).forEach { modelList ->
+                            page {
+                                title = "Models"
+                                description = "Here you can see what the models are and get more information about them"
+                                modelList.forEach { field(it.title) }
+                            }
                         }
                         page {
                             title = "Loras"
@@ -180,7 +182,7 @@ class StableDiffusionExtension(
                         page {
                             title = "Samplers"
                             description = "Here you can see what the loras are and get more information about them"
-                            samplers.forEach { field(it.name) }
+                            samplers.forEach { field(it.name, true) }
                         }
                     }.send()
                 }
