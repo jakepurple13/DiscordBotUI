@@ -176,15 +176,19 @@ class StableDiffusionExtension(
                                 modelList.forEach { field(it.title) }
                             }
                         }
-                        page {
-                            title = "Loras"
-                            description = "Here you can see what the loras are and get more information about them"
-                            loras.forEach { field(it.name, true) { it.alias } }
+                        loras.chunked(20).forEach { loraList ->
+                            page {
+                                title = "Loras"
+                                description = "Here you can see what the loras are and get more information about them"
+                                loraList.forEach { field(it.name, true) { it.alias } }
+                            }
                         }
-                        page {
-                            title = "Samplers"
-                            description = "Here you can see what the loras are and get more information about them"
-                            samplers.forEach { field(it.name, true) }
+                        samplers.chunked(10).forEach { samplerList ->
+                            page {
+                                title = "Samplers"
+                                description = "Here you can see what the loras are and get more information about them"
+                                samplerList.forEach { field(it.name, true) }
+                            }
                         }
                     }.send()
                 }
