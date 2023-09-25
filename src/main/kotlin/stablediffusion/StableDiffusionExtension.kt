@@ -18,6 +18,7 @@ import discordbot.Emerald
 import discordbot.Red
 import discordbot.respondWithError
 import io.ktor.client.request.forms.*
+import io.ktor.utils.io.*
 import kotlinx.datetime.Clock
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -39,6 +40,7 @@ class StableDiffusionExtension(
         sdProgress()
         sdHelp()
         sdLinks()
+        pngInfo()
     }
 
     private suspend fun stableDiffusion() {
@@ -49,63 +51,63 @@ class StableDiffusionExtension(
             action {
                 channel.type()
                 respond {
-                        stableDiffusionNetwork.stableDiffusion(
-                            prompt = arguments.prompt,
-                            modelName = arguments.model,
-                            negativePrompt = arguments.negativePrompt.orEmpty(),
-                            seed = arguments.seed,
-                            cfgScale = arguments.cfgScale,
-                            sampler = arguments.sampler,
-                            steps = arguments.steps,
-                            clipSkip = arguments.clipSkip,
-                            width = arguments.imageSize.width,
-                            height = arguments.imageSize.height,
-                            pose = arguments.pose?.download()
-                        )
-                            .onSuccess { model ->
-                                val info = model.info
-                                content = "${member?.mention} your image is ready!"
-                                embed {
-                                    title = "Here is your neko image!"
+                    stableDiffusionNetwork.stableDiffusion(
+                        prompt = arguments.prompt,
+                        modelName = arguments.model,
+                        negativePrompt = arguments.negativePrompt.orEmpty(),
+                        seed = arguments.seed,
+                        cfgScale = arguments.cfgScale,
+                        sampler = arguments.sampler,
+                        steps = arguments.steps,
+                        clipSkip = arguments.clipSkip,
+                        width = arguments.imageSize.width,
+                        height = arguments.imageSize.height,
+                        pose = arguments.pose?.download()
+                    )
+                        .onSuccess { model ->
+                            val info = model.info
+                            content = "${member?.mention} your image is ready!"
+                            embed {
+                                title = "Here is your neko image!"
 
-                                    field("Prompt") { info.prompt }
-                                    info.negativePrompt?.let { field("Negative Prompt") { it } }
-                                    field("Cfg Scale") { info.cfgScale.toString() }
-                                    field("Clip Skip") { info.clipSkip.toString() }
-                                    field("Steps") { info.steps.toString() }
-                                    field("Seed") { info.seed.toString() }
-                                    field("Sampling Method") { info.samplerName }
-                                    info.infotexts.firstOrNull()
-                                        ?.let { Regex("Model: (.*?),").find(it)?.groupValues?.getOrNull(1) }
-                                        ?.let { field("Model") { it } }
+                                field("Prompt") { info.prompt }
+                                info.negativePrompt?.let { field("Negative Prompt") { it } }
+                                field("Cfg Scale") { info.cfgScale.toString() }
+                                field("Clip Skip") { info.clipSkip.toString() }
+                                field("Steps") { info.steps.toString() }
+                                field("Seed") { info.seed.toString() }
+                                field("Sampling Method") { info.samplerName }
+                                info.infotexts.firstOrNull()
+                                    ?.let { Regex("Model: (.*?),").find(it)?.groupValues?.getOrNull(1) }
+                                    ?.let { field("Model") { it } }
 
-                                    footer {
-                                        val t = dateTimeParser.parse(info.jobTimestamp)
-                                        val z = ZonedDateTime.of(LocalDateTime.from(t), ZoneId.systemDefault())
-                                        val duration = System.currentTimeMillis() - Instant.from(z).toEpochMilli()
-                                        val time = dateTimeFormatter.format(
-                                            Instant.ofEpochMilli(duration).atZone(ZoneOffset.systemDefault())
-                                        )
+                                footer {
+                                    val t = dateTimeParser.parse(info.jobTimestamp)
+                                    val z = ZonedDateTime.of(LocalDateTime.from(t), ZoneId.systemDefault())
+                                    val duration = System.currentTimeMillis() - Instant.from(z).toEpochMilli()
+                                    val time = dateTimeFormatter.format(
+                                        Instant.ofEpochMilli(duration).atZone(ZoneOffset.systemDefault())
+                                    )
 
-                                        text = "Generated by Stable Diffusion - Took $time"
-                                    }
-
-                                    color = Emerald
+                                    text = "Generated by Stable Diffusion - Took $time"
                                 }
 
-                                model.imagesAsByteChannel().forEach {
-                                    addFile("output.png", ChannelProvider { it })
-                                }
+                                color = Emerald
                             }
-                            .onFailure {
-                                content = "Error!"
-                                embed {
-                                    title = "Something went wrong"
-                                    description = it.stackTraceToString()
-                                    color = Red
-                                }
+
+                            model.imagesAsByteChannel().forEach {
+                                addFile("output.png", ChannelProvider { it })
                             }
-                    }
+                        }
+                        .onFailure {
+                            content = "Error!"
+                            embed {
+                                title = "Something went wrong"
+                                description = it.stackTraceToString()
+                                color = Red
+                            }
+                        }
+                }
             }
         }
     }
@@ -187,6 +189,34 @@ class StableDiffusionExtension(
                     }.send()
                 }
             }
+        }
+    }
+
+    private suspend fun pngInfo() {
+        publicSlashCommand(::PngInfoArgs) {
+            name = "pnginfo"
+            description = "Get stable diffusion information from an image"
+            action {
+                respond {
+                    val image = arguments.image.download()
+                    stableDiffusionNetwork.sdPngInfo(image)
+                        .onSuccess {
+                            embed {
+                                title = "Png Info"
+                                description = it.info
+                            }
+                            addFile(arguments.image.filename, ChannelProvider { ByteReadChannel(image) })
+                        }
+                        .respondWithError()
+                }
+            }
+        }
+    }
+
+    class PngInfoArgs : Arguments() {
+        val image by attachment {
+            name = "image"
+            description = "The image to get information about"
         }
     }
 

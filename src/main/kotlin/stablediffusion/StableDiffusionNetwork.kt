@@ -7,6 +7,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.util.*
 
@@ -68,6 +69,25 @@ class StableDiffusionNetwork(
             .let { json.decodeFromString<StableDiffusionProgress>(it) }
     }
         .onFailure { it.printStackTrace() }
+
+    suspend fun sdPngInfo(
+        image: ByteArray,
+    ) = runCatching {
+        @Serializable
+        class SdPngInfo(val image: String)
+
+        client.post("$stableDiffusionUrl/png-info") {
+            contentType(ContentType.Application.Json)
+            accept(ContentType.Application.Json)
+            setBody(SdPngInfo(Base64.getEncoder().encodeToString(image)))
+            timeout {
+                requestTimeoutMillis = Long.MAX_VALUE
+                connectTimeoutMillis = Long.MAX_VALUE
+            }
+        }
+            .bodyAsText()
+            .let { json.decodeFromString<PngInfo>(it) }
+    }
 
     suspend fun stableDiffusion(
         prompt: String,

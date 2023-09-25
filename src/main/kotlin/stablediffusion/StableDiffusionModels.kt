@@ -279,3 +279,14 @@ internal fun createControlNets(
         )
     )
 )
+
+@Serializable
+data class PngInfo(
+    val info: String,
+    val items: Items,
+)
+
+@Serializable
+data class Items(
+    val parameters: String,
+)
