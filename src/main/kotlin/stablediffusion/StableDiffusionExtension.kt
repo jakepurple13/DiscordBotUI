@@ -70,8 +70,8 @@ class StableDiffusionExtension(
                             embed {
                                 title = "Here is your neko image!"
 
-                                field("Prompt") { info.prompt }
-                                info.negativePrompt?.let { field("Negative Prompt") { it } }
+                                field("Prompt") { if (info.prompt.length <= 1024) info.prompt else "Too many characters" }
+                                info.negativePrompt?.let { field("Negative Prompt") { if (it.length <= 1024) it else "Too many characters" } }
                                 field("Cfg Scale") { info.cfgScale.toString() }
                                 field("Clip Skip") { info.clipSkip.toString() }
                                 field("Steps") { info.steps.toString() }
