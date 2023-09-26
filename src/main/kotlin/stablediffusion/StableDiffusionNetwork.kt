@@ -162,4 +162,55 @@ class StableDiffusionNetwork(
                 )
             }
     }
+
+    suspend fun img2Img(
+        prompt: String,
+        modelName: String? = null,
+        cfgScale: Double = 7.0,
+        steps: Int = 20,
+        negativePrompt: String = "",
+        sampler: String? = null,
+        seed: Long? = null,
+        clipSkip: Long = 1,
+        width: Long = 512,
+        height: Long = 512,
+        initImg: ByteArray,
+    ) = runCatching {
+        client.post("$stableDiffusionUrl/img2img") {
+            contentType(ContentType.Application.Json)
+            accept(ContentType.Application.Json)
+            setBody(
+                StableDiffusionBodyImg2Img(
+                    prompt = prompt,
+                    negativePrompt = negativePrompt,
+                    cfgScale = cfgScale,
+                    steps = steps,
+                    samplerIndex = sampler ?: "Euler a",
+                    seed = seed ?: -1,
+                    overrideOptions = modelName?.let {
+                        OverriddenOptions(
+                            sdModelCheckpoint = it,
+                            clipSkip = clipSkip
+                        )
+                    },
+                    width = width,
+                    height = height,
+                    initImages = listOf(Base64.getEncoder().encodeToString(initImg))
+                )
+            )
+            timeout {
+                requestTimeoutMillis = Long.MAX_VALUE
+                connectTimeoutMillis = Long.MAX_VALUE
+            }
+        }
+            .bodyAsText()
+            .let { json.decodeFromString<StableDiffusionImg2ImgResponse>(it) }
+            .let {
+                StableDiffusionImg2ImgInfo(
+                    images = it.images,
+                    parameters = it.parameters,
+                    info = json.decodeFromString<StableDiffusionImg2ImgResponseInfo>(it.info)
+                )
+            }
+    }
 }
