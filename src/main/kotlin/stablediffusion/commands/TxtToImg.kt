@@ -133,6 +133,11 @@ private class DiffusionArgs : Arguments() {
         name = "pose"
         description = "Add if you want to use a pose using ControlNet and OpenPose"
     }
+
+    /*val style by optionalString {
+        name = "style"
+        description = "A specific style"
+    }*/
 }
 
 enum class StableDiffusionSize(val height: Long, val width: Long) : ChoiceEnum {

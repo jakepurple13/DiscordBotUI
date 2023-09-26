@@ -54,7 +54,6 @@ fun SDInfo.writeResponse() {
     }
 }
 
-
 @OptIn(ExperimentalSerializationApi::class)
 class DynamicLookupSerializer : KSerializer<Any> {
     override val descriptor: SerialDescriptor = ContextualSerializer(Any::class, null, emptyArray()).descriptor

@@ -31,20 +31,14 @@ class StableDiffusionNetwork(
     },
 ) {
     suspend fun stableDiffusionLoras() = runCatching {
-        client.get("$stableDiffusionUrl/loras") {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
-        }
+        client.get("$stableDiffusionUrl/loras") { setup() }
             .bodyAsText()
             .let { json.decodeFromString<List<StableDiffusionLora>>(it) }
     }
         .onFailure { it.printStackTrace() }
 
     suspend fun stableDiffusionSamplers() = runCatching {
-        client.get("$stableDiffusionUrl/samplers") {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
-        }
+        client.get("$stableDiffusionUrl/samplers") { setup() }
             .bodyAsText()
             .let { json.decodeFromString<List<StableDiffusionSamplers>>(it) }
     }
@@ -62,8 +56,7 @@ class StableDiffusionNetwork(
 
     suspend fun stableDiffusionProgress() = runCatching {
         client.get("$stableDiffusionUrl/progress") {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
+            setup()
             timeout {
                 requestTimeoutMillis = Long.MAX_VALUE
                 connectTimeoutMillis = Long.MAX_VALUE
@@ -81,8 +74,7 @@ class StableDiffusionNetwork(
         class SdPngInfo(val image: String)
 
         client.post("$stableDiffusionUrl/png-info") {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
+            setup()
             setBody(SdPngInfo(Base64.getEncoder().encodeToString(image)))
             timeout {
                 requestTimeoutMillis = Long.MAX_VALUE
@@ -91,6 +83,20 @@ class StableDiffusionNetwork(
         }
             .bodyAsText()
             .let { json.decodeFromString<PngInfo>(it) }
+    }
+
+    private fun HttpRequestBuilder.setup() {
+        contentType(ContentType.Application.Json)
+        accept(ContentType.Application.Json)
+    }
+
+    suspend fun stableDiffusionStyles() = runCatching {
+        client.get("$stableDiffusionUrl/script-info") {
+            setup()
+        }
+            .bodyAsText()
+            .let { json.decodeFromString<List<AlwaysOnScriptInfo>>(it) }
+            .first { it.name == "style selector for sdxl 1.0" }
     }
 
     suspend fun stableDiffusion(
@@ -105,10 +111,10 @@ class StableDiffusionNetwork(
         width: Long = 512,
         height: Long = 512,
         pose: ByteArray? = null,
+        //style: String = "base"
     ) = runCatching {
         client.post("$stableDiffusionUrl/txt2img") {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
+            setup()
             setBody(
                 StableDiffusionBody(
                     prompt = prompt,
@@ -126,7 +132,15 @@ class StableDiffusionNetwork(
                     width = width,
                     height = height,
                     alwaysOnScripts = mapOfNotNull(
-                        pose?.let { "controlnet" to createControlNets(Base64.getEncoder().encodeToString(it)) }
+                        pose?.let { "controlnet" to createControlNets(Base64.getEncoder().encodeToString(it)) },
+                        /*"style selector for sdxl 1.0" to StyleSelector(
+                            args = listOf(
+                                StyleSelectorArgs(
+                                    label = "Style Selector Style",
+                                    name = style
+                                )
+                            )
+                        )*/
                     )
                 )
             )
@@ -160,8 +174,7 @@ class StableDiffusionNetwork(
         initImg: ByteArray,
     ) = runCatching {
         client.post("$stableDiffusionUrl/img2img") {
-            contentType(ContentType.Application.Json)
-            accept(ContentType.Application.Json)
+            setup()
             setBody(
                 StableDiffusionBodyImg2Img(
                     prompt = prompt,

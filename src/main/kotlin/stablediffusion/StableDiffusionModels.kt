@@ -265,3 +265,26 @@ data class PngInfo(
 data class Items(
     val parameters: String,
 )
+
+@Serializable
+internal class StyleSelector(
+    val args: List<StyleSelectorArgs>,
+)
+
+@Serializable
+internal class StyleSelectorArgs(
+    val label: String,
+    val name: String,
+)
+
+@Serializable
+data class AlwaysOnScriptInfo(
+    val name: String,
+    val args: List<ScriptInfoArgs>,
+)
+
+@Serializable
+data class ScriptInfoArgs(
+    val label: String,
+    val choices: List<String>?,
+)

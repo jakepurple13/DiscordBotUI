@@ -106,6 +106,7 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
                                 .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 8.dp)
                                 .fillMaxSize()
                         ) {
                             FlowRow(
@@ -267,6 +268,19 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
 
                     Divider()
 
+                    /*var showStyle by remember { mutableStateOf(false) }
+                    ExposedBoxOptions(
+                        expanded = showStyle,
+                        onExpandedChange = { showStyle = it },
+                        currentValue = viewModel.style,
+                        options = viewModel.styleList,
+                        optionToString = { it },
+                        onClick = { viewModel.style = it ?: return@ExposedBoxOptions },
+                        label = "Style",
+                    )
+
+                    Divider()*/
+
                     var showFilePicker by remember { mutableStateOf(false) }
 
                     val fileType = listOf("jpg", "png")
@@ -386,6 +400,8 @@ internal class StableDiffusionViewModel(
     var sdInfo by mutableStateOf<SDImageInfo?>(null)
     var isLoading by mutableStateOf(false)
 
+    var style by mutableStateOf<String>("base")
+
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("m:ss", Locale.getDefault())
     private val dateTimeParser = DateTimeFormatter
         .ofPattern("yyyyMMddHHmmss", Locale.getDefault())
@@ -394,11 +410,13 @@ internal class StableDiffusionViewModel(
     val modelList = mutableStateListOf<StableDiffusionModel>()
     val samplerList = mutableStateListOf<StableDiffusionSamplers>()
     val loraList = mutableStateListOf<StableDiffusionLora>()
+    val styleList = mutableStateListOf<String>()
 
     init {
         loadModels()
         loadSamplers()
         loadLoras()
+        loadStyles()
     }
 
     fun loadModels() {
@@ -430,6 +448,15 @@ internal class StableDiffusionViewModel(
         }
     }
 
+    fun loadStyles() {
+        viewModelScope.launch {
+            stableDiffusionNetwork.stableDiffusionStyles().onSuccess {
+                styleList.clear()
+                styleList.addAll(it.args.find { it.label == "Style" }?.choices.orEmpty())
+            }
+        }
+    }
+
     fun generateImage() {
         viewModelScope.launch {
             isLoading = true
@@ -446,14 +473,19 @@ internal class StableDiffusionViewModel(
                     clipSkip = clipSkip,
                     width = width,
                     height = height,
-                    pose = pose
-                ).onSuccess {
-                    sdInfo = SDImageInfo(
-                        stableDiffusionInfo = it,
-                        dateTimeFormatter = dateTimeFormatter,
-                        dateTimeParser = dateTimeParser
-                    )
-                }
+                    pose = pose,
+                    //style = style
+                )
+                    .onSuccess {
+                        sdInfo = SDImageInfo(
+                            stableDiffusionInfo = it,
+                            dateTimeFormatter = dateTimeFormatter,
+                            dateTimeParser = dateTimeParser
+                        )
+                    }
+                    .onFailure {
+                        it.printStackTrace()
+                    }
             }
             isLoading = false
         }
