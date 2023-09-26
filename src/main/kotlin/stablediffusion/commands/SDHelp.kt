@@ -23,6 +23,9 @@ suspend fun StableDiffusionExtension.sdHelp() {
                 val samplers = stableDiffusionNetwork.stableDiffusionSamplers()
                     .getOrNull()
                     .orEmpty()
+                val styles = stableDiffusionNetwork.stableDiffusionStyles()
+                    .getOrNull()
+                    .orEmpty()
                 editingPaginator {
                     keepEmbed = true
                     models.chunked(10).forEach { modelList ->
@@ -44,6 +47,13 @@ suspend fun StableDiffusionExtension.sdHelp() {
                             title = "Samplers"
                             description = "Here you can see what the loras are and get more information about them"
                             samplerList.forEach { field(it.name, true) }
+                        }
+                    }
+                    styles.chunked(15).forEach { styleList ->
+                        page {
+                            title = "Styles"
+                            description = "Here you can see what styles are available"
+                            styleList.forEach { field(it, true) }
                         }
                     }
                 }.send()

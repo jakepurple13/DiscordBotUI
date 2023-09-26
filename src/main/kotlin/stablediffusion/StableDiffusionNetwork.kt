@@ -3,16 +3,19 @@ package stablediffusion
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import java.util.*
 
 private const val STABLE_DIFFUSION_URL = "http://127.0.0.1:7860/sdapi/v1"
+private const val ALLOW_LOGGING = false
 
 class StableDiffusionNetwork(
     private val stableDiffusionUrl: String = STABLE_DIFFUSION_URL,
@@ -28,6 +31,12 @@ class StableDiffusionNetwork(
     private val client: HttpClient = HttpClient {
         install(ContentNegotiation) { json(json) }
         install(HttpTimeout)
+        if (ALLOW_LOGGING) {
+            install(Logging) {
+                logger = Logger.DEFAULT
+                level = LogLevel.ALL
+            }
+        }
     },
 ) {
     suspend fun stableDiffusionLoras() = runCatching {
@@ -97,6 +106,10 @@ class StableDiffusionNetwork(
             .bodyAsText()
             .let { json.decodeFromString<List<AlwaysOnScriptInfo>>(it) }
             .first { it.name == "style selector for sdxl 1.0" }
+            .args
+            .find { it.label == "Style" }
+            ?.choices
+            .orEmpty()
     }
 
     suspend fun stableDiffusion(
@@ -111,8 +124,11 @@ class StableDiffusionNetwork(
         width: Long = 512,
         height: Long = 512,
         pose: ByteArray? = null,
-        //style: String = "base"
+        style: String = "base",
     ) = runCatching {
+        @Serializable
+        class Args(val args: List<@Contextual Any>)
+
         client.post("$stableDiffusionUrl/txt2img") {
             setup()
             setBody(
@@ -133,15 +149,8 @@ class StableDiffusionNetwork(
                     height = height,
                     alwaysOnScripts = mapOfNotNull(
                         pose?.let { "controlnet" to createControlNets(Base64.getEncoder().encodeToString(it)) },
-                        /*"style selector for sdxl 1.0" to StyleSelector(
-                            args = listOf(
-                                StyleSelectorArgs(
-                                    label = "Style Selector Style",
-                                    name = style
-                                )
-                            )
-                        )*/
-                    )
+                        "style selector for sdxl 1.0" to Args(listOf(true, false, false, false, style))
+                    ),
                 )
             )
             timeout {

@@ -16,15 +16,8 @@ import stablediffusion.StableDiffusion
 import stablediffusion.StableDiffusionNetwork
 import stablediffusionui.StableDiffusionUI
 
-enum class RunType {
-    DiscordBot,
-    Testing
-}
-
-private val running = RunType.DiscordBot
-
 fun main() {
-    when (running) {
+    when (DiscordBotCompileSettings.running) {
         RunType.DiscordBot -> DiscordBot()
         RunType.Testing -> {}
     }

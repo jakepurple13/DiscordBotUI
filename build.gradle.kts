@@ -45,6 +45,7 @@ dependencies {
     implementation(compose.desktop.components.splitPane)
     implementation(compose.material3)
     implementation(compose.materialIconsExtended)
+    implementation("io.ktor:ktor-client-logging-jvm:$ktor_version")
     val precompose = "1.5.0-beta01"
     implementation("moe.tlaster:precompose:$precompose")
     implementation("moe.tlaster:precompose-viewmodel:$precompose")

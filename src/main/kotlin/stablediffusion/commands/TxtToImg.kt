@@ -36,7 +36,8 @@ suspend fun StableDiffusionExtension.stableDiffusion() {
                     clipSkip = arguments.clipSkip,
                     width = arguments.imageSize.width,
                     height = arguments.imageSize.height,
-                    pose = arguments.pose?.download()
+                    pose = arguments.pose?.download(),
+                    style = arguments.style
                 )
                     .onSuccess { model ->
                         val info = model.info
@@ -134,10 +135,11 @@ private class DiffusionArgs : Arguments() {
         description = "Add if you want to use a pose using ControlNet and OpenPose"
     }
 
-    /*val style by optionalString {
+    val style by defaultingString {
         name = "style"
         description = "A specific style"
-    }*/
+        defaultValue = "base"
+    }
 }
 
 enum class StableDiffusionSize(val height: Long, val width: Long) : ChoiceEnum {

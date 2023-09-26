@@ -268,7 +268,7 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
 
                     Divider()
 
-                    /*var showStyle by remember { mutableStateOf(false) }
+                    var showStyle by remember { mutableStateOf(false) }
                     ExposedBoxOptions(
                         expanded = showStyle,
                         onExpandedChange = { showStyle = it },
@@ -277,9 +277,14 @@ fun StableDiffusionUI(stableDiffusionNetwork: StableDiffusionNetwork) {
                         optionToString = { it },
                         onClick = { viewModel.style = it ?: return@ExposedBoxOptions },
                         label = "Style",
+                        leadingIcon = {
+                            IconButton(
+                                onClick = viewModel::loadStyles,
+                            ) { Icon(Icons.Default.Refresh, null) }
+                        }
                     )
 
-                    Divider()*/
+                    Divider()
 
                     var showFilePicker by remember { mutableStateOf(false) }
 
@@ -452,7 +457,7 @@ internal class StableDiffusionViewModel(
         viewModelScope.launch {
             stableDiffusionNetwork.stableDiffusionStyles().onSuccess {
                 styleList.clear()
-                styleList.addAll(it.args.find { it.label == "Style" }?.choices.orEmpty())
+                styleList.addAll(it)
             }
         }
     }
@@ -474,7 +479,7 @@ internal class StableDiffusionViewModel(
                     width = width,
                     height = height,
                     pose = pose,
-                    //style = style
+                    style = style
                 )
                     .onSuccess {
                         sdInfo = SDImageInfo(
