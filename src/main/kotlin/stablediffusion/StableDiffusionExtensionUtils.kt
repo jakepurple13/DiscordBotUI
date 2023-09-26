@@ -3,6 +3,11 @@ package stablediffusion
 import dev.kord.rest.builder.message.create.FollowupMessageCreateBuilder
 import dev.kord.rest.builder.message.create.embed
 import discordbot.Emerald
+import kotlinx.serialization.*
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.time.*
 
 data class SDInfo(
@@ -48,3 +53,25 @@ fun SDInfo.writeResponse() {
         color = Emerald
     }
 }
+
+
+@OptIn(ExperimentalSerializationApi::class)
+class DynamicLookupSerializer : KSerializer<Any> {
+    override val descriptor: SerialDescriptor = ContextualSerializer(Any::class, null, emptyArray()).descriptor
+
+    @OptIn(InternalSerializationApi::class)
+    override fun serialize(encoder: Encoder, value: Any) {
+        if (value is ArrayList<*>) {
+            encoder.encodeSerializableValue(ListSerializer(DynamicLookupSerializer()), value)
+            return
+        }
+        val actualSerializer = encoder.serializersModule.getContextual(value::class) ?: value::class.serializer()
+        encoder.encodeSerializableValue(actualSerializer as KSerializer<Any>, value)
+    }
+
+    override fun deserialize(decoder: Decoder): Any {
+        error("Unsupported")
+    }
+}
+
+fun <K, V> mapOfNotNull(vararg pairs: Pair<K, V>?) = pairs.filterNotNull().toMap()

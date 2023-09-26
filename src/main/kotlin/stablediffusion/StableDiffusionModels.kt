@@ -1,6 +1,7 @@
 package stablediffusion
 
 import io.ktor.utils.io.*
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.*
@@ -21,6 +22,8 @@ internal class StableDiffusionBody(
     val overrideOptions: OverriddenOptions?,
     val width: Long,
     val height: Long,
+    @SerialName("alwayson_scripts")
+    val alwaysOnScripts: Map<String, @Contextual Any>?,
 )
 
 @Serializable
@@ -131,7 +134,7 @@ data class StableDiffusionModel(
 @Serializable
 data class StableDiffusionLora(
     val name: String,
-    val alias: String
+    val alias: String,
 )
 
 @Serializable
@@ -225,34 +228,8 @@ data class ExtraGenerationParams(
 )
 
 @Serializable
-internal class StableDiffusionBodyControlNet(
-    val seed: Long,
-    val prompt: String,
-    val cfgScale: Double,
-    val steps: Int,
-    @SerialName("sampler_index")
-    val samplerIndex: String,
-    @SerialName("negative_prompt")
-    val negativePrompt: String = "",
-    @SerialName("batch_size")
-    val batchSize: Long = 1,
-    @SerialName("override_settings")
-    val overrideOptions: OverriddenOptions?,
-    val width: Long,
-    val height: Long,
-    @SerialName("alwayson_scripts")
-    val alwaysOnScripts: ControlNetArgs?,
-)
-
-@Serializable
 internal class ControlArgs(
     val args: List<ControlNetUnits>,
-)
-
-@Serializable
-internal class ControlNetArgs(
-    @SerialName("controlnet")
-    val controlNetUnits: ControlArgs,
 )
 
 @Serializable
@@ -268,14 +245,12 @@ internal fun createControlNets(
     inputImage: String,
     model: String = "control_v11p_sd15_openpose [cab727d4]",
     module: String = "openpose",
-) = ControlNetArgs(
-    controlNetUnits = ControlArgs(
-        args = listOf(
-            ControlNetUnits(
-                inputImage = inputImage,
-                model = model,
-                //module = module
-            )
+) = ControlArgs(
+    args = listOf(
+        ControlNetUnits(
+            inputImage = inputImage,
+            model = model,
+            //module = module
         )
     )
 )

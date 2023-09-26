@@ -9,6 +9,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
 import java.util.*
 
 private const val STABLE_DIFFUSION_URL = "http://127.0.0.1:7860/sdapi/v1"
@@ -20,6 +21,9 @@ class StableDiffusionNetwork(
         prettyPrint = true
         ignoreUnknownKeys = true
         coerceInputValues = true
+        serializersModule = SerializersModule {
+            contextual(Any::class, DynamicLookupSerializer())
+        }
     },
     private val client: HttpClient = HttpClient {
         install(ContentNegotiation) { json(json) }
@@ -106,46 +110,25 @@ class StableDiffusionNetwork(
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
             setBody(
-                when {
-                    pose != null -> {
-                        StableDiffusionBodyControlNet(
-                            prompt = prompt,
-                            negativePrompt = negativePrompt,
-                            cfgScale = cfgScale,
-                            steps = steps,
-                            samplerIndex = sampler ?: "Euler a",
-                            seed = seed ?: -1,
-                            overrideOptions = modelName?.let {
-                                OverriddenOptions(
-                                    sdModelCheckpoint = it,
-                                    clipSkip = clipSkip
-                                )
-                            },
-                            width = width,
-                            height = height,
-                            alwaysOnScripts = createControlNets(Base64.getEncoder().encodeToString(pose))
+                StableDiffusionBody(
+                    prompt = prompt,
+                    negativePrompt = negativePrompt,
+                    cfgScale = cfgScale,
+                    steps = steps,
+                    samplerIndex = sampler ?: "Euler a",
+                    seed = seed ?: -1,
+                    overrideOptions = modelName?.let {
+                        OverriddenOptions(
+                            sdModelCheckpoint = it,
+                            clipSkip = clipSkip
                         )
-                    }
-
-                    else -> {
-                        StableDiffusionBody(
-                            prompt = prompt,
-                            negativePrompt = negativePrompt,
-                            cfgScale = cfgScale,
-                            steps = steps,
-                            samplerIndex = sampler ?: "Euler a",
-                            seed = seed ?: -1,
-                            overrideOptions = modelName?.let {
-                                OverriddenOptions(
-                                    sdModelCheckpoint = it,
-                                    clipSkip = clipSkip
-                                )
-                            },
-                            width = width,
-                            height = height
-                        )
-                    }
-                }
+                    },
+                    width = width,
+                    height = height,
+                    alwaysOnScripts = mapOfNotNull(
+                        pose?.let { "controlnet" to createControlNets(Base64.getEncoder().encodeToString(it)) }
+                    )
+                )
             )
             timeout {
                 requestTimeoutMillis = Long.MAX_VALUE
