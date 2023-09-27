@@ -31,7 +31,7 @@ internal class ModelSuggesterDatabase(name: String = Realm.DEFAULT_FILE_NAME) {
                     ModelSuggestion::class,
                 )
             )
-                .schemaVersion(1)
+                .schemaVersion(6)
                 .name(name)
                 .migration(AutomaticSchemaMigration { })
                 .build()
@@ -47,12 +47,22 @@ internal class ModelSuggesterDatabase(name: String = Realm.DEFAULT_FILE_NAME) {
     suspend fun addSuggestion(
         link: String,
         reason: String,
+        suggestedBy: String,
+        avatar: String?,
+        channel: String,
+        server: String,
+        lastMessage: String?,
     ) {
         realm.updateInfo<ModelSuggesterList> {
             it.list.add(
                 ModelSuggestion().apply {
                     this.link = link
                     this.reason = reason
+                    this.suggestedBy = suggestedBy
+                    this.avatar = avatar
+                    this.channel = channel
+                    this.server = server
+                    this.lastMessageUrl = lastMessage
                 }
             )
         }
@@ -74,6 +84,12 @@ internal class ModelSuggestion : RealmObject {
     var uuid: String = RealmUUID.random().toString()
     var link: String = ""
     var reason: String = ""
+    var suggestedBy: String = ""
+    var avatar: String? = null
+    var channel: String = ""
+    var server: String = ""
+    var timestamp: Long = System.currentTimeMillis()
+    var lastMessageUrl: String? = null
 }
 
 private suspend inline fun <reified T : RealmObject> Realm.updateInfo(crossinline block: MutableRealm.(T) -> Unit) {

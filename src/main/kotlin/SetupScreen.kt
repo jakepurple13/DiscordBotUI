@@ -23,7 +23,6 @@ import androidx.compose.ui.window.*
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import dev.kord.core.entity.Guild
 import kotlinx.coroutines.runBlocking
-import stablediffusionui.ModelSuggestionUI
 
 @Composable
 @Preview
@@ -180,7 +179,6 @@ fun DiscordBotUI(
         var showSettings by remember { mutableStateOf(false) }
         var showSearch by remember { mutableStateOf(false) }
         var showBotOptions by remember { mutableStateOf(false) }
-        var showSuggestions by remember { mutableStateOf(false) }
         val state = rememberWindowState()
 
         WindowWithBar(
@@ -201,12 +199,6 @@ fun DiscordBotUI(
                             text = "Show Settings",
                             checked = showSettings,
                             onCheckedChange = { showSettings = it }
-                        )
-
-                        CheckboxItem(
-                            text = "Show Suggestions",
-                            checked = showSuggestions,
-                            onCheckedChange = { showSuggestions = it }
                         )
                     }
                     mainMenuOptions()
@@ -250,12 +242,6 @@ fun DiscordBotUI(
             SearchWindow(
                 viewModel = viewModel,
                 onClose = { showSearch = false }
-            )
-        }
-
-        if (showSuggestions) {
-            ModelSuggestionUI(
-                onClose = { showSuggestions = false }
             )
         }
 

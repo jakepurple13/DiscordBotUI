@@ -14,6 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import stablediffusion.StableDiffusion
 import stablediffusion.StableDiffusionNetwork
+import stablediffusionui.ModelSuggestionUI
 import stablediffusionui.StableDiffusionUI
 
 fun main() {
@@ -26,6 +27,7 @@ fun main() {
 private fun DiscordBot() {
     val stableDiffusionNetwork = StableDiffusionNetwork()
     var showStableDiffusionWindow by mutableStateOf(false)
+    var showSuggestions by mutableStateOf(false)
     DiscordBotUI(
         botCreation = { token ->
             ExtensibleBot(token!!) {
@@ -100,15 +102,31 @@ private fun DiscordBot() {
                     checked = showStableDiffusionWindow,
                     onCheckedChange = { showStableDiffusionWindow = it }
                 )
+
+                CheckboxItem(
+                    text = "Show Suggestions",
+                    checked = showSuggestions,
+                    onCheckedChange = { showSuggestions = it }
+                )
             }
         }
     ) {
-        WindowWithBar(
-            onCloseRequest = { showStableDiffusionWindow = false },
-            visible = showStableDiffusionWindow,
-            windowTitle = "Stable Diffusion",
-        ) {
-            StableDiffusionUI(stableDiffusionNetwork)
+        if (showStableDiffusionWindow) {
+            WindowWithBar(
+                onCloseRequest = { showStableDiffusionWindow = false },
+                windowTitle = "Stable Diffusion",
+            ) {
+                StableDiffusionUI(stableDiffusionNetwork)
+            }
+        }
+
+        if (showSuggestions) {
+            WindowWithBar(
+                onCloseRequest = { showSuggestions = false },
+                windowTitle = "Model Suggestions"
+            ) {
+                ModelSuggestionUI()
+            }
         }
     }
 }

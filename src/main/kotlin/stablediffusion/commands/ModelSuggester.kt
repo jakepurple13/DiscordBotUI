@@ -5,6 +5,7 @@ package stablediffusion.commands
 import com.kotlindiscord.kord.extensions.components.forms.ModalForm
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
+import com.kotlindiscord.kord.extensions.utils.getJumpUrl
 import dev.kord.rest.builder.message.create.embed
 import discordbot.Emerald
 import discordbot.Red
@@ -31,9 +32,15 @@ suspend fun StableDiffusionExtension.modelSuggester() {
 
         action {
             runCatching {
+                val userData = user.fetchUser()
                 modelSuggesterDatabase.addSuggestion(
-                    checkNotNull(linkLine.value),
-                    reasonLine.value.orEmpty()
+                    link = checkNotNull(linkLine.value),
+                    reason = reasonLine.value.orEmpty(),
+                    suggestedBy = userData.let { it.globalName ?: it.username },
+                    avatar = userData.avatar?.cdnUrl?.toUrl(),
+                    channel = channel.asChannelOrNull()?.data?.name?.value ?: "Direct Message",
+                    server = guild?.asGuildOrNull()?.name ?: "Direct Message",
+                    lastMessage = channel.asChannel().getLastMessage()?.getJumpUrl()
                 )
             }
                 .onSuccess {

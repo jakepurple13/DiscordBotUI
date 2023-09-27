@@ -2,54 +2,66 @@
 
 package stablediffusion.commands
 
+import com.kotlindiscord.kord.extensions.commands.Arguments
+import com.kotlindiscord.kord.extensions.commands.application.slash.converters.ChoiceEnum
+import com.kotlindiscord.kord.extensions.commands.application.slash.converters.impl.defaultingEnumChoice
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.editingPaginator
 import com.kotlindiscord.kord.extensions.types.respond
 import stablediffusion.StableDiffusionExtension
 
 suspend fun StableDiffusionExtension.sdHelp() {
-    ephemeralSlashCommand {
+    ephemeralSlashCommand(arguments = ::SdHelpArgs) {
         name = "sdhelp"
         description = "See what information this stable diffusion instance has access to"
 
         action {
             respond {
-                val loras = stableDiffusionNetwork.stableDiffusionLoras()
-                    .getOrNull()
-                    .orEmpty()
-                val models = stableDiffusionNetwork.stableDiffusionModels()
-                    .getOrNull()
-                    .orEmpty()
-                val samplers = stableDiffusionNetwork.stableDiffusionSamplers()
-                    .getOrNull()
-                    .orEmpty()
-                val styles = stableDiffusionNetwork.stableDiffusionStyles()
-                    .getOrNull()
-                    .orEmpty()
+                fun allow(types: SdHelpTypes) = arguments.type == types || arguments.type == SdHelpTypes.All
+
+                suspend fun <T> haveListIfAllowed(types: SdHelpTypes, block: suspend () -> List<T>?) =
+                    if (allow(types)) block() else null
+
+                val loras = haveListIfAllowed(SdHelpTypes.Lora) {
+                    stableDiffusionNetwork.stableDiffusionLoras().getOrNull()
+                }
+
+                val models = haveListIfAllowed(SdHelpTypes.Model) {
+                    stableDiffusionNetwork.stableDiffusionModels().getOrNull()
+                }
+
+                val samplers = haveListIfAllowed(SdHelpTypes.Sampler) {
+                    stableDiffusionNetwork.stableDiffusionSamplers().getOrNull()
+                }
+
+                val styles = haveListIfAllowed(SdHelpTypes.Style) {
+                    stableDiffusionNetwork.stableDiffusionStyles().getOrNull()
+                }
+
                 editingPaginator {
                     keepEmbed = true
-                    models.chunked(10).forEach { modelList ->
+                    models?.chunked(10)?.forEach { modelList ->
                         page {
                             title = "Models"
                             description = "Here you can see what the models are and get more information about them"
                             modelList.forEach { field(it.title) }
                         }
                     }
-                    loras.chunked(20).forEach { loraList ->
+                    loras?.chunked(20)?.forEach { loraList ->
                         page {
                             title = "Loras"
                             description = "Here you can see what the loras are and get more information about them"
                             loraList.forEach { field(it.name, true) { it.alias } }
                         }
                     }
-                    samplers.chunked(10).forEach { samplerList ->
+                    samplers?.chunked(10)?.forEach { samplerList ->
                         page {
                             title = "Samplers"
                             description = "Here you can see what the loras are and get more information about them"
                             samplerList.forEach { field(it.name, true) }
                         }
                     }
-                    styles.chunked(15).forEach { styleList ->
+                    styles?.chunked(15)?.forEach { styleList ->
                         page {
                             title = "Styles"
                             description = "Here you can see what styles are available"
@@ -60,4 +72,21 @@ suspend fun StableDiffusionExtension.sdHelp() {
             }
         }
     }
+}
+
+private class SdHelpArgs : Arguments() {
+    val type by defaultingEnumChoice<SdHelpTypes> {
+        name = "type"
+        description = "Show all help or just specific help"
+        typeName = "SdHelp Type"
+        defaultValue = SdHelpTypes.All
+    }
+}
+
+private enum class SdHelpTypes(override val readableName: String) : ChoiceEnum {
+    All("All"),
+    Model("Models"),
+    Lora("Loras"),
+    Sampler("Samplers"),
+    Style("Styles")
 }
