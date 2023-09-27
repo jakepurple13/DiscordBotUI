@@ -37,6 +37,7 @@ private fun DiscordBot() {
                     val network = Network()
                     add { NekoExtension(network) }
                     add { MarvelSnapExtension(network) }
+                    add { AboutExtension() }
                     StableDiffusion.addToKordExtensions(stableDiffusionNetwork)
                     help {
                         pingInReply = true
