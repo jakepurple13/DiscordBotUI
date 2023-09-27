@@ -9,10 +9,7 @@ import dev.kord.rest.builder.message.create.actionRow
 import dev.kord.rest.builder.message.create.embed
 import discordbot.respondWithError
 import kotlinx.datetime.Clock
-import stablediffusion.commands.img2Img
-import stablediffusion.commands.pngInfo
-import stablediffusion.commands.sdHelp
-import stablediffusion.commands.stableDiffusion
+import stablediffusion.commands.*
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -35,6 +32,7 @@ class StableDiffusionExtension(
         sdLinks()
         pngInfo()
         img2Img()
+        modelSuggester()
     }
 
     private suspend fun sdProgress() {
