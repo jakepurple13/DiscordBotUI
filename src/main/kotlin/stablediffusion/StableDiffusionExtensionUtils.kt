@@ -29,15 +29,31 @@ fun SDInfo.writeResponse() {
 
         field("Prompt") { if (prompt.length <= 1024) prompt else "Too many characters" }
         negativePrompt?.let { field("Negative Prompt") { if (it.length <= 1024) it else "Too many characters" } }
-        field("Cfg Scale") { cfgScale.toString() }
+        /*field("Cfg Scale") { cfgScale.toString() }
         field("Clip Skip") { clipSkip.toString() }
         field("Steps") { steps.toString() }
         field("Seed") { seed.toString() }
-        field("Sampling Method") { samplerName }
+        field("Sampling Method") { samplerName }*/
+        /*val infoText = infotexts.firstOrNull()
+
+        infoText
+            ?.let { Regex("Style Selector Style: (.*?),").find(it)?.groupValues?.getOrNull(1) }
+            ?.let { field("Style") { it } }
+
+        infoText
+            ?.let { Regex("Model: (.*?),").find(it)?.groupValues?.getOrNull(1) }
+            ?.let { field("Model") { it } }*/
+
         infotexts
             .firstOrNull()
-            ?.let { Regex("Model: (.*?),").find(it)?.groupValues?.getOrNull(1) }
-            ?.let { field("Model") { it } }
+            ?.removePrefix(prompt)
+            ?.split(",")
+            ?.forEach {
+                runCatching {
+                    val kv = it.split(":")
+                    field(kv.first(), true) { kv.last() }
+                }
+            }
 
         footer {
             val t = dateTimeParser.parse(jobTimestamp)
@@ -73,4 +89,4 @@ class DynamicLookupSerializer : KSerializer<Any> {
     }
 }
 
-fun <K, V> mapOfNotNull(vararg pairs: Pair<K, V>?) = pairs.filterNotNull().toMap()
+fun <K, V> mapOfNotNull(vararg pairs: Pair<K, V>?): Map<K, V> = pairs.filterNotNull().toMap()
