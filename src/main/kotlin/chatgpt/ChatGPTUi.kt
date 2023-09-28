@@ -165,10 +165,22 @@ private class ChatGPTViewModel(
             messages.add(Message(Role.User, message))
             chatGPTNetwork.chatCompletion(message)
                 .onSuccess { response ->
-                    messages.addAll(response.choices.map { it.message })
+                    //messages.addAll(response.choices.map { it.message })
+                    messages.add(
+                        Message(
+                            role = Role.Assistant,
+                            content = response
+                        )
+                    )
                 }
                 .onFailure {
-
+                    it.printStackTrace()
+                    messages.add(
+                        Message(
+                            role = Role.Assistant,
+                            content = "Something went wrong. Please try again."
+                        )
+                    )
                 }
             message = ""
             isLoading = false

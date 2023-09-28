@@ -75,6 +75,8 @@ dependencies {
     val datastore = "1.1.0-alpha04"
     implementation("androidx.datastore:datastore-core:$datastore")
     implementation("androidx.datastore:datastore-preferences-core:$datastore")
+
+    implementation("com.hexadevlabs:gpt4all-java-binding:1.1.5")
 }
 
 compose.desktop {

@@ -21,9 +21,12 @@ internal suspend fun ChatGPTExtension.chat() {
             channel.withTyping {
                 chatGPTNetwork.chatCompletion(arguments.prompt)
                     .onSuccess {
-                        interactionResponse.createEphemeralFollowup {
-                            content = it.choices.firstOrNull()?.message?.content
+                        it.chunked(2000).forEach { c ->
+                            interactionResponse.createEphemeralFollowup { content = c }
                         }
+                        /*interactionResponse.createEphemeralFollowup {
+                            content = it//it.choices.firstOrNull()?.message?.content
+                        }*/
                     }
                     .onFailure {
                         respond {
@@ -47,8 +50,8 @@ internal suspend fun ChatGPTExtension.chat() {
             channel.withTyping {
                 chatGPTNetwork.chatCompletion(arguments.prompt)
                     .onSuccess {
-                        respond {
-                            content = it.choices.firstOrNull()?.message?.content
+                        it.chunked(2000).forEach { s ->
+                            respond { content = s }
                         }
                     }
                     .onFailure {
