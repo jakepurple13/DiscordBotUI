@@ -19,24 +19,30 @@ suspend fun StableDiffusionExtension.sdHelp() {
             respond {
                 fun allow(types: SdHelpTypes) = arguments.type == types || arguments.type == SdHelpTypes.All
 
-                suspend fun <T> haveListIfAllowed(types: SdHelpTypes, block: suspend () -> List<T>?) =
-                    if (allow(types)) block() else null
+                suspend fun <T> haveListIfAllowed(
+                    types: SdHelpTypes,
+                    block: suspend () -> Result<T>?,
+                ) = if (allow(types)) block()?.getOrNull() else null
 
-                val loras = haveListIfAllowed(SdHelpTypes.Lora) {
-                    stableDiffusionNetwork.stableDiffusionLoras().getOrNull()
-                }
+                val loras = haveListIfAllowed(
+                    types = SdHelpTypes.Lora,
+                    block = stableDiffusionNetwork::stableDiffusionLoras
+                )
 
-                val models = haveListIfAllowed(SdHelpTypes.Model) {
-                    stableDiffusionNetwork.stableDiffusionModels().getOrNull()
-                }
+                val models = haveListIfAllowed(
+                    types = SdHelpTypes.Model,
+                    block = stableDiffusionNetwork::stableDiffusionModels
+                )
 
-                val samplers = haveListIfAllowed(SdHelpTypes.Sampler) {
-                    stableDiffusionNetwork.stableDiffusionSamplers().getOrNull()
-                }
+                val samplers = haveListIfAllowed(
+                    types = SdHelpTypes.Sampler,
+                    block = stableDiffusionNetwork::stableDiffusionSamplers
+                )
 
-                val styles = haveListIfAllowed(SdHelpTypes.Style) {
-                    stableDiffusionNetwork.stableDiffusionStyles().getOrNull()
-                }
+                val styles = haveListIfAllowed(
+                    types = SdHelpTypes.Style,
+                    block = stableDiffusionNetwork::stableDiffusionStyles
+                )
 
                 editingPaginator {
                     keepEmbed = true
