@@ -1,5 +1,6 @@
 package chatgpt
 
+import DiscordBotCompileSettings
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -15,12 +16,11 @@ import kotlinx.serialization.modules.SerializersModule
 import stablediffusion.DynamicLookupSerializer
 import kotlin.time.Duration.Companion.minutes
 
-private const val CHAT_GPT_URL = "http://127.0.0.1:8000/"
 private const val ALLOW_LOGGING = false
 
 class ChatGPTNetwork(
-    token: String = "sk-",
-    private val chatGptUrl: String = CHAT_GPT_URL,
+    private val chatGptUrl: String,
+    token: String = DiscordBotCompileSettings.CHAT_GPT_KEY,
     private val json: Json = Json {
         isLenient = true
         prettyPrint = true

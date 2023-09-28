@@ -2,12 +2,13 @@
 
 package chatgpt
 
+import DiscordBotCompileSettings
 import chatgpt.commands.chat
 import chatgpt.commands.textCompletion
 import com.kotlindiscord.kord.extensions.extensions.Extension
 
 internal class ChatGPTExtension(
-    val chatGPTNetwork: ChatGPTNetwork = ChatGPTNetwork(),
+    val chatGPTNetwork: ChatGPTNetwork = ChatGPTNetwork(DiscordBotCompileSettings.CHAT_GPT_URL),
 ) : Extension() {
     override val name: String get() = "chatgpt"
 

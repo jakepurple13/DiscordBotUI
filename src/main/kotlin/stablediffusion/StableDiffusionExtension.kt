@@ -2,6 +2,7 @@
 
 package stablediffusion
 
+import DiscordBotCompileSettings
 import com.kotlindiscord.kord.extensions.extensions.Extension
 import com.kotlindiscord.kord.extensions.extensions.ephemeralSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
@@ -16,7 +17,7 @@ import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 class StableDiffusionExtension(
-    val stableDiffusionNetwork: StableDiffusionNetwork = StableDiffusionNetwork(),
+    val stableDiffusionNetwork: StableDiffusionNetwork = StableDiffusionNetwork(DiscordBotCompileSettings.STABLE_DIFFUSION_URL),
 ) : Extension() {
     val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("m:ss", Locale.getDefault())
     val dateTimeParser: DateTimeFormatter = DateTimeFormatter

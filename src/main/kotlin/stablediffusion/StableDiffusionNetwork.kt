@@ -14,11 +14,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import java.util.*
 
-private const val STABLE_DIFFUSION_URL = "http://127.0.0.1:7860/sdapi/v1"
 private const val ALLOW_LOGGING = false
 
 class StableDiffusionNetwork(
-    private val stableDiffusionUrl: String = STABLE_DIFFUSION_URL,
+    private val stableDiffusionUrl: String,
     private val json: Json = Json {
         isLenient = true
         prettyPrint = true

@@ -33,8 +33,8 @@ fun main() {
 }
 
 private fun DiscordBot() {
-    val stableDiffusionNetwork = StableDiffusionNetwork()
-    val chatGPTNetwork = ChatGPTNetwork()
+    val stableDiffusionNetwork = StableDiffusionNetwork(DiscordBotCompileSettings.STABLE_DIFFUSION_URL)
+    val chatGPTNetwork = ChatGPTNetwork(DiscordBotCompileSettings.CHAT_GPT_URL)
     var showStableDiffusionWindow by mutableStateOf(false)
     var showSuggestions by mutableStateOf(false)
     var showChatGPTWindow by mutableStateOf(false)
