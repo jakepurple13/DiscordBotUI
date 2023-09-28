@@ -23,7 +23,7 @@ private const val ALLOW_LOGGING = false
 class ChatGPTNetwork(
     private val chatGptUrl: String,
     token: String = DiscordBotCompileSettings.CHAT_GPT_KEY,
-    private val llm: LLModel = LLModel(Path.of("llama-2-7b-chat.ggmlv3.q4_0.bin")),
+    private val llm: LLModel = LLModel(Path.of("llama-2-7b-chat.ggmlv3.q8_0.bin")),
     private val json: Json = Json {
         isLenient = true
         prettyPrint = true
