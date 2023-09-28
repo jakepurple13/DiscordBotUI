@@ -8,6 +8,7 @@ import com.kotlindiscord.kord.extensions.commands.converters.impl.*
 import com.kotlindiscord.kord.extensions.extensions.publicSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
 import com.kotlindiscord.kord.extensions.utils.download
+import dev.kord.core.behavior.channel.withTyping
 import dev.kord.rest.builder.message.create.embed
 import discordbot.Red
 import io.ktor.client.request.forms.*
@@ -23,40 +24,41 @@ suspend fun StableDiffusionExtension.img2Img() {
         description = "Get an ai generated image from another image"
 
         action {
-            channel.type()
-            respond {
-                val initImg = arguments.initImg.download()
-                stableDiffusionNetwork.img2Img(
-                    prompt = arguments.prompt,
-                    modelName = arguments.model,
-                    negativePrompt = arguments.negativePrompt.orEmpty(),
-                    seed = arguments.seed,
-                    cfgScale = arguments.cfgScale,
-                    sampler = arguments.sampler,
-                    steps = arguments.steps,
-                    clipSkip = arguments.clipSkip,
-                    width = arguments.imageSize.width,
-                    height = arguments.imageSize.height,
-                    initImg = initImg
-                )
-                    .onSuccess { model ->
-                        val info = model.info
-                        content = "${member?.mention} your image is ready!"
-                        info.toInfo().writeResponse()
-                        model.imagesAsByteChannel().forEach {
-                            addFile("output.png", ChannelProvider { it })
+            channel.withTyping {
+                respond {
+                    val initImg = arguments.initImg.download()
+                    stableDiffusionNetwork.img2Img(
+                        prompt = arguments.prompt,
+                        modelName = arguments.model,
+                        negativePrompt = arguments.negativePrompt.orEmpty(),
+                        seed = arguments.seed,
+                        cfgScale = arguments.cfgScale,
+                        sampler = arguments.sampler,
+                        steps = arguments.steps,
+                        clipSkip = arguments.clipSkip,
+                        width = arguments.imageSize.width,
+                        height = arguments.imageSize.height,
+                        initImg = initImg
+                    )
+                        .onSuccess { model ->
+                            val info = model.info
+                            content = "${member?.mention} your image is ready!"
+                            info.toInfo().writeResponse()
+                            model.imagesAsByteChannel().forEach {
+                                addFile("output.png", ChannelProvider { it })
+                            }
+                            addFile("original.png", ChannelProvider { ByteReadChannel(initImg) })
                         }
-                        addFile("original.png", ChannelProvider { ByteReadChannel(initImg) })
-                    }
-                    .onFailure {
-                        it.printStackTrace()
-                        content = "Error!"
-                        embed {
-                            title = "Something went wrong"
-                            description = it.stackTraceToString()
-                            color = Red
+                        .onFailure {
+                            it.printStackTrace()
+                            content = "Error!"
+                            embed {
+                                title = "Something went wrong"
+                                description = it.stackTraceToString()
+                                color = Red
+                            }
                         }
-                    }
+                }
             }
         }
     }
@@ -73,7 +75,6 @@ private fun StableDiffusionImg2ImgResponseInfo.toInfo() = SDInfo(
     infotexts = infotexts,
     jobTimestamp = jobTimestamp
 )
-
 
 private class Img2ImgArgs : Arguments() {
     val prompt by string {

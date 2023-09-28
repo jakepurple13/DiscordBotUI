@@ -9,6 +9,7 @@ import com.kotlindiscord.kord.extensions.commands.converters.impl.*
 import com.kotlindiscord.kord.extensions.extensions.publicSlashCommand
 import com.kotlindiscord.kord.extensions.types.respond
 import com.kotlindiscord.kord.extensions.utils.download
+import dev.kord.core.behavior.channel.withTyping
 import dev.kord.rest.builder.message.create.embed
 import discordbot.Red
 import io.ktor.client.request.forms.*
@@ -23,39 +24,40 @@ suspend fun StableDiffusionExtension.stableDiffusion() {
         description = "Get an ai generated image"
 
         action {
-            channel.type()
-            respond {
-                stableDiffusionNetwork.stableDiffusion(
-                    prompt = arguments.prompt,
-                    modelName = arguments.model,
-                    negativePrompt = arguments.negativePrompt.orEmpty(),
-                    seed = arguments.seed,
-                    cfgScale = arguments.cfgScale,
-                    sampler = arguments.sampler,
-                    steps = arguments.steps,
-                    clipSkip = arguments.clipSkip,
-                    width = arguments.imageSize.width,
-                    height = arguments.imageSize.height,
-                    pose = arguments.pose?.download(),
-                    style = arguments.style
-                )
-                    .onSuccess { model ->
-                        val info = model.info
-                        content = "${member?.mention} your image is ready!"
-                        info.toInfo().writeResponse()
-                        model.imagesAsByteChannel().forEach {
-                            addFile("output.png", ChannelProvider { it })
+            channel.withTyping {
+                respond {
+                    stableDiffusionNetwork.stableDiffusion(
+                        prompt = arguments.prompt,
+                        modelName = arguments.model,
+                        negativePrompt = arguments.negativePrompt.orEmpty(),
+                        seed = arguments.seed,
+                        cfgScale = arguments.cfgScale,
+                        sampler = arguments.sampler,
+                        steps = arguments.steps,
+                        clipSkip = arguments.clipSkip,
+                        width = arguments.imageSize.width,
+                        height = arguments.imageSize.height,
+                        pose = arguments.pose?.download(),
+                        style = arguments.style
+                    )
+                        .onSuccess { model ->
+                            val info = model.info
+                            content = "${member?.mention} your image is ready!"
+                            info.toInfo().writeResponse()
+                            model.imagesAsByteChannel().forEach {
+                                addFile("output.png", ChannelProvider { it })
+                            }
                         }
-                    }
-                    .onFailure {
-                        it.printStackTrace()
-                        content = "Error!"
-                        embed {
-                            title = "Something went wrong"
-                            description = it.stackTraceToString()
-                            color = Red
+                        .onFailure {
+                            it.printStackTrace()
+                            content = "Error!"
+                            embed {
+                                title = "Something went wrong"
+                                description = it.stackTraceToString()
+                                color = Red
+                            }
                         }
-                    }
+                }
             }
         }
     }

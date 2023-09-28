@@ -3,6 +3,9 @@
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import chatgpt.ChatGPT
+import chatgpt.ChatGPTNetwork
+import chatgpt.ChatGPTUi
 import com.kotlindiscord.kord.extensions.ExtensibleBot
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.behavior.edit
@@ -11,6 +14,7 @@ import dev.kord.rest.builder.message.modify.actionRow
 import dev.kord.rest.builder.message.modify.embed
 import discordbot.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Clock
 import stablediffusion.StableDiffusion
 import stablediffusion.StableDiffusionNetwork
@@ -20,14 +24,20 @@ import stablediffusionui.StableDiffusionUI
 fun main() {
     when (DiscordBotCompileSettings.running) {
         RunType.DiscordBot -> DiscordBot()
-        RunType.Testing -> {}
+        RunType.Testing -> {
+            runBlocking {
+
+            }
+        }
     }
 }
 
 private fun DiscordBot() {
     val stableDiffusionNetwork = StableDiffusionNetwork()
+    val chatGPTNetwork = ChatGPTNetwork()
     var showStableDiffusionWindow by mutableStateOf(false)
     var showSuggestions by mutableStateOf(false)
+    var showChatGPTWindow by mutableStateOf(false)
     DiscordBotUI(
         botCreation = { token ->
             ExtensibleBot(token!!) {
@@ -39,6 +49,7 @@ private fun DiscordBot() {
                     add { MarvelSnapExtension(network) }
                     add { AboutExtension() }
                     StableDiffusion.addToKordExtensions(stableDiffusionNetwork)
+                    ChatGPT.addToKordExtensions(chatGPTNetwork)
                     help {
                         pingInReply = true
                         color { Purple }
@@ -110,6 +121,13 @@ private fun DiscordBot() {
                     onCheckedChange = { showSuggestions = it }
                 )
             }
+            Menu("ChatGPT") {
+                CheckboxItem(
+                    "Show Chat GPT Window",
+                    checked = showChatGPTWindow,
+                    onCheckedChange = { showChatGPTWindow = it }
+                )
+            }
         }
     ) {
         if (showStableDiffusionWindow) {
@@ -127,6 +145,15 @@ private fun DiscordBot() {
                 windowTitle = "Model Suggestions"
             ) {
                 ModelSuggestionUI()
+            }
+        }
+
+        if (showChatGPTWindow) {
+            WindowWithBar(
+                onCloseRequest = { showChatGPTWindow = false },
+                windowTitle = "Chat GPT"
+            ) {
+                ChatGPTUi(chatGPTNetwork)
             }
         }
     }

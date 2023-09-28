@@ -45,14 +45,15 @@ dependencies {
     implementation(compose.desktop.components.splitPane)
     implementation(compose.material3)
     implementation(compose.materialIconsExtended)
-    implementation("io.ktor:ktor-client-logging-jvm:$ktor_version")
-    val precompose = "1.5.0-beta01"
+    val precompose = "1.5.4"
     implementation("moe.tlaster:precompose:$precompose")
     implementation("moe.tlaster:precompose-viewmodel:$precompose")
     implementation("media.kamel:kamel-image:0.7.2")
     implementation("com.darkrockstudios:mpfilepicker:2.1.0")
 
     //DiscordBot stuff
+    implementation("io.ktor:ktor-client-logging-jvm:$ktor_version")
+    implementation("io.ktor:ktor-client-auth-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktor_version")
