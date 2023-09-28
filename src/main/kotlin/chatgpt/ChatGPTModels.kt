@@ -68,3 +68,36 @@ enum class Role {
     @SerialName("assistant")
     Assistant
 }
+
+@Serializable
+internal data class TextCompletionRequest(
+    val prompt: String,
+    val model: String,
+    val stream: Boolean = false,
+    @SerialName("max_tokens")
+    val maxTokens: Int = 1000,
+    val temperature: Double = 1.2,
+    @SerialName("top_p")
+    val topP: Double = 0.5,
+    @SerialName("presence_penalty")
+    val presencePenalty: Double = 0.4,
+    @SerialName("frequency_penalty")
+    val frequencyPenalty: Double = 0.4,
+)
+
+@Serializable
+data class TextCompletionResponse(
+    @SerialName("object")
+    val objectField: String,
+    val model: String,
+    val usage: Usage,
+    val choices: List<TextChoice>,
+)
+
+@Serializable
+data class TextChoice(
+    val text: String,
+    val index: Long,
+    @SerialName("finish_reason")
+    val finishReason: String,
+)

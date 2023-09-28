@@ -3,6 +3,7 @@
 package chatgpt
 
 import chatgpt.commands.chat
+import chatgpt.commands.textCompletion
 import com.kotlindiscord.kord.extensions.extensions.Extension
 
 internal class ChatGPTExtension(
@@ -12,5 +13,6 @@ internal class ChatGPTExtension(
 
     override suspend fun setup() {
         chat()
+        textCompletion()
     }
 }

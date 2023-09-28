@@ -13,8 +13,9 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import stablediffusion.DynamicLookupSerializer
+import kotlin.time.Duration.Companion.minutes
 
-private const val CHAT_GPT_URL = "http://localhost:8000/v1/"
+private const val CHAT_GPT_URL = "http://127.0.0.1:8000/"
 private const val ALLOW_LOGGING = false
 
 class ChatGPTNetwork(
@@ -69,4 +70,20 @@ class ChatGPTNetwork(
             .body<ChatCompletionResponse>()
     }
 
+    suspend fun textCompletion(prompt: String, modelId: String = "rwkv") = runCatching {
+        client.post("completions") {
+            setBody(
+                TextCompletionRequest(
+                    prompt = prompt,
+                    model = modelId
+                )
+            )
+            contentType(ContentType.Application.Json)
+            timeout {
+                requestTimeoutMillis = 5.minutes.inWholeMilliseconds
+                connectTimeoutMillis = 5.minutes.inWholeMilliseconds
+            }
+        }
+            .body<TextCompletionResponse>()
+    }
 }
