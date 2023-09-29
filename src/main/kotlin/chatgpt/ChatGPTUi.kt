@@ -25,10 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.model.markdownColor
+import com.mikepenz.markdown.model.markdownTypography
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.viewmodel.ViewModel
@@ -156,48 +162,56 @@ private fun MessageCard(
             OutlinedCard(
                 shape = RoundedCornerShape(12.0.dp).copy(bottomEnd = CornerSize(4.dp)),
                 modifier = modifier.wrapContentWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        message.role.name,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    SelectionContainer {
-                        Text(
-                            message.content,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
+            ) { MessageCardContent(message) }
         }
 
         Role.Assistant -> {
-            Card(
+            ElevatedCard(
                 shape = RoundedCornerShape(12.0.dp).copy(bottomStart = CornerSize(4.dp)),
                 modifier = modifier.wrapContentWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        message.role.name,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    SelectionContainer {
-                        Text(
-                            message.content,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
+            ) { MessageCardContent(message) }
+        }
+    }
+}
+
+@Composable
+private fun MessageCardContent(
+    message: Message,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(16.dp)
+    ) {
+        Text(
+            message.role.name,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        SelectionContainer {
+            Markdown(
+                message.content,
+                colors = markdownColor(
+                    text = MaterialTheme.colorScheme.onSurface,
+                    codeText = MaterialTheme.colorScheme.onSurface,
+                    codeBackground = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                ),
+                typography = markdownTypography(
+                    h1 = MaterialTheme.typography.displayLarge,
+                    h2 = MaterialTheme.typography.displayMedium,
+                    h3 = MaterialTheme.typography.displaySmall,
+                    h4 = MaterialTheme.typography.headlineMedium,
+                    h5 = MaterialTheme.typography.headlineSmall,
+                    h6 = MaterialTheme.typography.titleLarge,
+                    text = MaterialTheme.typography.bodyLarge,
+                    code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                    quote = MaterialTheme.typography.bodyMedium + SpanStyle(fontStyle = FontStyle.Italic),
+                    paragraph = MaterialTheme.typography.bodyLarge,
+                    ordered = MaterialTheme.typography.bodyLarge,
+                    bullet = MaterialTheme.typography.bodyLarge,
+                    list = MaterialTheme.typography.bodyLarge
+                ),
+                modifier = Modifier.wrapContentSize()
+            )
         }
     }
 }

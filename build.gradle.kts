@@ -77,6 +77,8 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences-core:$datastore")
 
     implementation("com.hexadevlabs:gpt4all-java-binding:1.1.5")
+
+    implementation("com.mikepenz:multiplatform-markdown-renderer-jvm:0.8.0")
 }
 
 compose.desktop {
