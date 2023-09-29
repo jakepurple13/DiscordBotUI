@@ -2,6 +2,7 @@
 
 package chatgpt
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.VerticalScrollbar
@@ -12,6 +13,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
@@ -19,6 +22,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,26 +41,63 @@ fun ChatGPTUi(chatGPTNetwork: ChatGPTNetwork) {
     val viewModel = viewModel { ChatGPTViewModel(chatGPTNetwork) }
     val listState = rememberLazyListState()
 
+    LaunchedEffect(viewModel.messages.size) {
+        if (viewModel.messages.isNotEmpty())
+            listState.animateScrollToItem(viewModel.messages.lastIndex)
+    }
+
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(viewModel.isLoading) {
+        if (!viewModel.isLoading) {
+            focusRequester.requestFocus()
+        }
+    }
+
     Scaffold(
         bottomBar = {
-            BottomAppBar(
-                actions = {
-                    OutlinedTextField(
-                        value = viewModel.message,
-                        onValueChange = { viewModel.message = it },
-                        label = { Text("Send a Message!") },
-                        enabled = !viewModel.isLoading,
-                        modifier = Modifier
-                            .fillMaxWidth(0.75f)
-                            .padding(bottom = 6.dp, start = 4.dp)
-                    )
-                },
-                floatingActionButton = {
-                    FloatingActionButton(
-                        onClick = viewModel::sendMessage,
-                    ) { Icon(Icons.Default.Send, null) }
-                }
-            )
+            Surface(
+                color = BottomAppBarDefaults.containerColor,
+                tonalElevation = BottomAppBarDefaults.ContainerElevation,
+                modifier = Modifier.animateContentSize()
+            ) {
+                OutlinedTextField(
+                    value = viewModel.message,
+                    onValueChange = { viewModel.message = it },
+                    label = { Text("Send a Message!") },
+                    enabled = !viewModel.isLoading,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { viewModel.sendMessage() }
+                    ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = viewModel::sendMessage,
+                            enabled = !viewModel.isLoading
+                        ) { Icon(Icons.Default.Send, null) }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp)
+                        .focusRequester(focusRequester)
+                        .onPreviewKeyEvent {
+                            if (it.key == Key.Enter && it.type == KeyEventType.KeyDown) {
+                                if (it.isMetaPressed) {
+                                    val value = viewModel.message.text + "\n"
+                                    viewModel.message = TextFieldValue(
+                                        text = value,
+                                        selection = TextRange(value.length)
+                                    )
+                                } else {
+                                    viewModel.sendMessage()
+                                }
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                )
+            }
         }
     ) { padding ->
         Box(
@@ -161,15 +207,15 @@ private class ChatGPTViewModel(
 ) : ViewModel() {
 
     var isLoading by mutableStateOf(false)
-    var message by mutableStateOf("")
+    var message by mutableStateOf(TextFieldValue())
 
     val messages = mutableStateListOf<Message>()
 
     fun sendMessage() {
         viewModelScope.launch(Dispatchers.IO) {
             isLoading = true
-            messages.add(Message(Role.User, message))
-            chatGPTNetwork.chatCompletion(message)
+            messages.add(Message(Role.User, message.text))
+            /*chatGPTNetwork.generate(message)
                 .onSuccess { response ->
                     //messages.addAll(response.choices.map { it.message })
                     messages.add(
@@ -187,8 +233,35 @@ private class ChatGPTViewModel(
                             content = "Something went wrong. Please try again."
                         )
                     )
+                }*/
+            chatGPTNetwork.chatCompletion(messages)
+                .onSuccess { response ->
+                    //messages.addAll(response.choices.map { it.message })
+                    response.choices.forEach {
+                        messages.add(
+                            Message(
+                                role = it["role"].toRole(),
+                                content = it["content"].orEmpty()
+                            )
+                        )
+                    }
+                    /*messages.add(
+                        Message(
+                            role = Role.Assistant,
+                            content = response
+                        )
+                    )*/
                 }
-            message = ""
+                .onFailure {
+                    it.printStackTrace()
+                    messages.add(
+                        Message(
+                            role = Role.Assistant,
+                            content = "Something went wrong. Please try again."
+                        )
+                    )
+                }
+            message = TextFieldValue("")
             isLoading = false
         }
     }

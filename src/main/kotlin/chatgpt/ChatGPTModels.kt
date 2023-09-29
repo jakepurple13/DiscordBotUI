@@ -69,6 +69,12 @@ enum class Role {
     Assistant
 }
 
+fun String?.toRole() = when (this) {
+    "user" -> Role.User
+    "assistant" -> Role.Assistant
+    else -> Role.Assistant
+}
+
 @Serializable
 internal data class TextCompletionRequest(
     val prompt: String,

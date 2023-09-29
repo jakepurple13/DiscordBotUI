@@ -72,13 +72,27 @@ class ChatGPTNetwork(
             .body<ChatCompletionResponse>()
     }*/
 
-    suspend fun chatCompletion(prompt: String) = runCatching {
+    suspend fun generate(prompt: String) = runCatching {
         llm.generate(
             prompt,
             LLModel.config()
                 .withNPredict(4096)
                 .build(),
             false
+        )
+    }
+
+    suspend fun chatCompletion(messages: List<Message>) = runCatching {
+        llm.chatCompletion(
+            messages.map {
+                mapOf(
+                    "role" to it.role.name.lowercase(),
+                    "content" to it.content
+                )
+            },
+            LLModel.config()
+                .withNPredict(4096)
+                .build(),
         )
     }
 

@@ -476,3 +476,9 @@ private class DropTargetNode(
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) =
         dragDropNode.onGloballyPositioned(coordinates)
 }
+
+inline fun <T, R> Iterable<T>.foldWithFirst(initial: (T) -> R, operation: (acc: R, T) -> R): R {
+    val first = first()
+    val f = initial(first)
+    return drop(1).fold(initial = f, operation = operation)
+}
