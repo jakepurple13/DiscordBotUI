@@ -478,7 +478,9 @@ private class DropTargetNode(
 }
 
 inline fun <T, R> Iterable<T>.foldWithFirst(initial: (T) -> R, operation: (acc: R, T) -> R): R {
-    val first = first()
-    val f = initial(first)
-    return drop(1).fold(initial = f, operation = operation)
+    return drop(1)
+        .fold(
+            initial = initial(first()),
+            operation = operation
+        )
 }
