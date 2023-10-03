@@ -22,8 +22,8 @@ private const val ALLOW_LOGGING = false
 
 class ChatGPTNetwork(
     private val chatGptUrl: String,
+    modelPath: String = "llama-2-7b-chat.ggmlv3.q8_0.bin",
     token: String = DiscordBotCompileSettings.CHAT_GPT_KEY,
-    private val llm: LLModel = LLModel(Path.of("llama-2-7b-chat.ggmlv3.q8_0.bin")),
     private val json: Json = Json {
         isLenient = true
         prettyPrint = true
@@ -54,6 +54,7 @@ class ChatGPTNetwork(
         expectSuccess = true
     },
 ) {
+    private val llm: LLModel by lazy { LLModel(Path.of(modelPath)) }
     /*suspend fun chatCompletion(prompt: String, modelId: String = "rwkv") = runCatching {
         client.post("chat/completions") {
             setBody(
