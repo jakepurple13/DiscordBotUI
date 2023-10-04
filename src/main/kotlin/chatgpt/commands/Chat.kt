@@ -55,7 +55,7 @@ internal suspend fun ChatGPTExtension.chat() {
         description = "Chat with ChatGPT!"
         val userMap: MutableMap<Snowflake, MutableList<Message>> = mutableMapOf()
         action {
-            val snowflake = channel.asChannelOrNull()?.id ?: user.id
+            val snowflake = channel.asChannelOrNull()?.id ?: user.id //TODO: Check that this is not null for dms
             userMap.putIfAbsent(snowflake, mutableListOf())
             userMap[snowflake]?.add(
                 Message(

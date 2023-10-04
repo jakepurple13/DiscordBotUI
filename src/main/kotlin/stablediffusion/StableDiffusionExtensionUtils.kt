@@ -29,11 +29,11 @@ fun SDInfo.writeResponse() {
 
         field("Prompt") { if (prompt.length <= 1024) prompt else "Too many characters" }
         negativePrompt?.let { field("Negative Prompt") { if (it.length <= 1024) it else "Too many characters" } }
-        /*field("Cfg Scale") { cfgScale.toString() }
+        field("Cfg Scale") { cfgScale.toString() }
         field("Clip Skip") { clipSkip.toString() }
         field("Steps") { steps.toString() }
         field("Seed") { seed.toString() }
-        field("Sampling Method") { samplerName }*/
+        field("Sampling Method") { samplerName }
         /*val infoText = infotexts.firstOrNull()
 
         infoText
