@@ -47,6 +47,7 @@ fun SDInfo.writeResponse() {
         infotexts
             .firstOrNull()
             ?.removePrefix(prompt)
+            ?.let { negativePrompt?.let { n -> it.replace("Negative prompt: $n", "") } }
             ?.split(",")
             ?.forEach {
                 runCatching {
